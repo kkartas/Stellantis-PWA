@@ -2,15 +2,15 @@ import logging
 import hashlib
 import secrets
 import base64
+import time
 from typing import Tuple
 
 from http import HTTPStatus
 from typing import Optional
 
-from oauth2_client.credentials_manager import CredentialManager, ServiceInformation
+from oauth2_client.credentials_manager import CredentialManager, OAuthError, ServiceInformation
 from requests import Response, RequestException
 
-from psa_car_controller.common.utils import rate_limit
 from psa_car_controller.psa import connected_car_api
 from psa_car_controller.psa.connected_car_api import ApiClient
 from psa_car_controller.psa.connected_car_api.rest import ApiException
@@ -40,6 +40,12 @@ class OpenIdCredentialManager(CredentialManager):
         self.refresh_callbacks = []
         self.code_verifier = None
         self.redirect_uri = None
+        self._refresh_limit = 6
+        self._refresh_window_seconds = 1800
+        self._refresh_window_started_at = 0.0
+        self._refresh_window_count = 0
+        self._refresh_retry_after = 0.0
+        self._last_refresh_skip_log_at = 0.0
 
     def _grant_password_request_realm(self, login: str, password: str, realm: str) -> dict:
         return {"grant_type": 'password', "username": login, "scope": ' '.join(self.service_information.scopes),
@@ -72,15 +78,51 @@ class OpenIdCredentialManager(CredentialManager):
     def access_token(self):
         return self._access_token
 
-    @rate_limit(6, 1800)
+    def _refresh_allowed(self, now: float) -> bool:
+        if now < self._refresh_retry_after:
+            if now - self._last_refresh_skip_log_at >= 60:
+                wait_seconds = int(self._refresh_retry_after - now)
+                logger.info("Skip token refresh during cooldown (%ss remaining)", wait_seconds)
+                self._last_refresh_skip_log_at = now
+            return False
+
+        if self._refresh_window_started_at == 0.0 or now - self._refresh_window_started_at >= self._refresh_window_seconds:
+            self._refresh_window_started_at = now
+            self._refresh_window_count = 0
+
+        if self._refresh_window_count >= self._refresh_limit:
+            self._refresh_retry_after = self._refresh_window_started_at + self._refresh_window_seconds
+            wait_seconds = int(max(0, self._refresh_retry_after - now))
+            logger.warning("OAuth refresh throttled by local policy; next retry in %ss", wait_seconds)
+            return False
+
+        self._refresh_window_count += 1
+        return True
+
     def refresh_token_now(self):
+        now = time.monotonic()
+        if not self._refresh_allowed(now):
+            return False
+
         try:
             self._refresh_token()
             for refresh_callback in self.refresh_callbacks:
                 refresh_callback()
+            self._refresh_retry_after = 0.0
             return True
+        except OAuthError as e:
+            error_text = str(e)
+            retry_seconds = 900 if "invalid_grant" in error_text else 300
+            self._refresh_retry_after = max(self._refresh_retry_after, now + retry_seconds)
+            logger.warning("Can't refresh token: %s (next retry in %ss)", e, retry_seconds)
         except RequestException as e:
-            logger.error("Can't refresh token %s", e)
+            retry_seconds = 120
+            self._refresh_retry_after = max(self._refresh_retry_after, now + retry_seconds)
+            logger.error("Can't refresh token %s (next retry in %ss)", e, retry_seconds)
+        except Exception as e:  # pragma: no cover - defensive
+            retry_seconds = 120
+            self._refresh_retry_after = max(self._refresh_retry_after, now + retry_seconds)
+            logger.error("Unexpected token refresh error %s (next retry in %ss)", e, retry_seconds)
         return False
 
 
@@ -89,11 +131,51 @@ class Oauth2PSACCApiConfig(connected_car_api.Configuration):
         super().__init__()
         self.refresh_callback = lambda: True
 
+    def auth_settings(self):
+        # Some environments can leave access_token to None after a failed refresh.
+        # Keep auth header construction safe and let API flow handle unauthorized responses.
+        access_token = self.access_token or ""
+        return {
+            'Vehicle_auth':
+                {
+                    'type': 'oauth2',
+                    'in': 'header',
+                    'key': 'Authorization',
+                    'value': 'Bearer ' + access_token
+                },
+            'client_id':
+                {
+                    'type': 'api_key',
+                    'in': 'query',
+                    'key': 'client_id',
+                    'value': self.get_api_key_with_prefix('client_id')
+                },
+            'realm':
+                {
+                    'type': 'api_key',
+                    'in': 'header',
+                    'key': 'x-introspect-realm',
+                    'value': self.get_api_key_with_prefix('x-introspect-realm')
+                },
+        }
+
     def set_refresh_callback(self, callback):
         self.refresh_callback = callback
 
 
 class OauthAPIClient(ApiClient):
+    def _refresh_if_needed(self, auth_settings=None):
+        needs_vehicle_auth = bool(auth_settings and 'Vehicle_auth' in auth_settings)
+        if not needs_vehicle_auth:
+            return True
+        if self.configuration.access_token:
+            return True
+        try:
+            return bool(self.configuration.refresh_callback())
+        except Exception:
+            logger.debug("OAuth token refresh failed", exc_info=True)
+            return False
+
     # pylint: disable=no-member,too-many-arguments,too-many-positional-arguments
     def call_api(self, resource_path, method,
                  path_params=None, query_params=None, header_params=None,
@@ -101,6 +183,9 @@ class OauthAPIClient(ApiClient):
                  response_type=None, auth_settings=None, async_req=None,
                  _return_http_data_only=None, collection_formats=None,
                  _preload_content=True, _request_timeout=None):
+        if not self._refresh_if_needed(auth_settings):
+            raise ApiException(status=401, reason="Unauthorized")
+
         for _ in range(0, 2):
             try:
                 if not async_req:
@@ -120,7 +205,8 @@ class OauthAPIClient(ApiClient):
                                                                _preload_content, _request_timeout))
             except ApiException as e:
                 if e.reason == 'Unauthorized':
-                    self.configuration.refresh_callback()
+                    if not self._refresh_if_needed(auth_settings):
+                        raise e
                 else:
                     raise e
-        return None
+        raise ApiException(status=401, reason="Unauthorized")

@@ -8,6 +8,7 @@ homepage = "https://github.com/flobz/psa_car_controller"
 repository = "https://github.com/flobz/psa_car_controller"
 include = [
     "LICENSE",
+    "psa_car_controller/web/pwa/**/*",
 ]
 
 [tool.poetry.dependencies]

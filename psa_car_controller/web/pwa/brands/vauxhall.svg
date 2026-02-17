@@ -1,0 +1,5 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vauxhall logo">
+  <rect width="64" height="64" rx="16" fill="#161922"/>
+  <path d="M12 20l20 28 20-28" fill="none" stroke="#f4f7fb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="30" r="9" fill="none" stroke="#f7b32b" stroke-width="3"/>
+</svg>

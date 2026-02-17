@@ -81,8 +81,13 @@ class ChargeControl:
         now = datetime.now()
         try:
             vehicle_status = self.psacc.vehicles_list.get_car_by_vin(self.vin).get_status()
-            status = vehicle_status.get_energy('Electric').charging.status
-            level = vehicle_status.get_energy('Electric').level
+            electric_energy = vehicle_status.get_energy('Electric')
+            charging_info = getattr(electric_energy, "charging", None)
+            status = getattr(charging_info, "status", None)
+            level = getattr(electric_energy, "level", None)
+            if status is None or level is None:
+                logger.debug("Charge status unavailable for %s; skipping charge control cycle", self.vin)
+                return
             has_threshold = self.percentage_threshold < 100
             hit_threshold = level >= self.percentage_threshold
             if status == INPROGRESS:

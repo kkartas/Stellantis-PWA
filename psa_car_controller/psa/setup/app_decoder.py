@@ -2,6 +2,8 @@
 import json
 import logging
 import traceback
+from pathlib import Path
+from time import time
 
 import requests
 
@@ -18,13 +20,90 @@ APP_VERSION = "1.48.2"
 GITHUB_USER = "flobz"
 GITHUB_REPO = "psa_apk"
 TIMEOUT_IN_S = 10
+SETUP_CACHE_DIR = Path(".psacc_cache")
+APK_CACHE_FILE = SETUP_CACHE_DIR / "apk_setup_cache.json"
+APK_CACHE_TTL_IN_S = 24 * 60 * 60
 app = PSACarController()
 
 
+def _load_apk_cache():
+    try:
+        with APK_CACHE_FILE.open("r", encoding="utf-8") as cache_file:
+            payload = json.load(cache_file)
+            if isinstance(payload, dict):
+                return payload
+    except (FileNotFoundError, ValueError, OSError):
+        pass
+    return {}
+
+
+def _save_apk_cache(cache):
+    try:
+        SETUP_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with APK_CACHE_FILE.open("w", encoding="utf-8") as cache_file:
+            json.dump(cache, cache_file, ensure_ascii=True, indent=2)
+    except OSError:
+        logger.debug("Unable to save APK setup cache", exc_info=True)
+
+
+def _cache_key(filename: str, country_code: str):
+    return f"{filename}:{country_code.upper()}"
+
+
+def _cache_valid(entry):
+    if not isinstance(entry, dict):
+        return False
+    saved_at = entry.get("saved_at")
+    if not isinstance(saved_at, (int, float)):
+        return False
+    if time() - float(saved_at) > APK_CACHE_TTL_IN_S:
+        return False
+    required = ("host_brandid_prod", "site_code", "culture", "client_id", "client_secret")
+    return all(entry.get(key) for key in required)
+
+
+def _certificates_available():
+    return Path("certs/public.pem").is_file() and Path("certs/private.pem").is_file()
+
+
+def _cached_apk_parser(filename: str, country_code: str):
+    cache = _load_apk_cache()
+    entry = cache.get(_cache_key(filename, country_code))
+    if not _cache_valid(entry) or not _certificates_available():
+        return None
+
+    apk_parser = ApkParser(filename, country_code)
+    apk_parser.host_brandid_prod = entry["host_brandid_prod"]
+    apk_parser.site_code = entry["site_code"]
+    apk_parser.culture = entry["culture"]
+    apk_parser.client_id = entry["client_id"]
+    apk_parser.client_secret = entry["client_secret"]
+    logger.info("Using cached APK setup data for %s/%s", filename, country_code.upper())
+    return apk_parser
+
+
+def _store_apk_parser_cache(filename: str, country_code: str, apk_parser: ApkParser):
+    cache = _load_apk_cache()
+    cache[_cache_key(filename, country_code)] = {
+        "saved_at": int(time()),
+        "host_brandid_prod": apk_parser.host_brandid_prod,
+        "site_code": apk_parser.site_code,
+        "culture": apk_parser.culture,
+        "client_id": apk_parser.client_id,
+        "client_secret": apk_parser.client_secret,
+    }
+    _save_apk_cache(cache)
+
+
 def get_content_from_apk(filename: str, country_code: str) -> ApkParser:
+    cached_parser = _cached_apk_parser(filename, country_code)
+    if cached_parser is not None:
+        return cached_parser
+
     urlretrieve_from_github(GITHUB_USER, GITHUB_REPO, "", filename)
     apk_parser = ApkParser(filename, country_code)
     apk_parser.retrieve_content_from_apk()
+    _store_apk_parser_cache(filename, country_code, apk_parser)
     return apk_parser
 
 
@@ -134,8 +213,9 @@ class InitialSetup:
         # Charge control
         charge_controls = ChargeControls(config_prefix + "charge_config.json")
         for vehicle in res:
-            chc = ChargeControl(self.psacc, vehicle.vin, 100, [0, 0])
-            charge_controls[vehicle.vin] = chc
+            if vehicle.has_battery():
+                chc = ChargeControl(self.psacc, vehicle.vin, 100, [0, 0])
+                charge_controls[vehicle.vin] = chc
         charge_controls.save_config()
         app.load_app()
         app.start_remote_control()

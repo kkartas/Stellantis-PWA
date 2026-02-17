@@ -5,7 +5,7 @@ from statistics import mean, StatisticsError
 
 from configupdater import ConfigUpdater
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 from psa_car_controller.psacc.application.battery_charge_curve import BatteryChargeCurve
 from psa_car_controller.psacc.model.charge import Charge
@@ -62,7 +62,9 @@ class Hour(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v, values=None, config=None, field=None):
+        if v is None:
+            return None
         if not isinstance(v, str):
             raise TypeError('string required')
         if len(v) == 0:
@@ -88,17 +90,17 @@ class GeneralConfig(BaseModel):
     currency: str = "€"
     length_unit: str = "km"
     minimum_trip_length: float = 10
-    export_format = "csv"
+    export_format: str = "csv"
 
 
 class ElectricityPriceConfig(BaseModel):
     day_price: float = 0.15
-    night_price: float = None
-    night_hour_start: Hour = None
-    night_hour_end: Hour = None
-    dc_charge_price: float = None
-    high_speed_dc_charge_price: float = None
-    high_speed_dc_charge_threshold: float = None
+    night_price: Optional[float] = None
+    night_hour_start: Optional[Hour] = None
+    night_hour_end: Optional[Hour] = None
+    dc_charge_price: Optional[float] = None
+    high_speed_dc_charge_price: Optional[float] = None
+    high_speed_dc_charge_threshold: Optional[float] = None
     charger_efficiency: float = 0.8942
 
     @staticmethod
@@ -155,6 +157,18 @@ class ConfigRepository(BaseModel):
     General: GeneralConfig
     Electricity_config: ElectricityPriceConfig
 
+    def _to_dict(self):
+        if hasattr(self, "model_dump"):
+            return self.model_dump()
+        return self.dict()
+
+    @staticmethod
+    def _validate_dict(data):
+        if hasattr(ConfigRepository, "model_validate"):
+            ConfigRepository.model_validate(data)
+        else:
+            ConfigRepository(**data)
+
     @staticmethod
     def _read_file(name):
         if name is None:
@@ -181,7 +195,7 @@ class ConfigRepository(BaseModel):
         return config
 
     def config_dto_to_config_file(self, config):
-        res = replace_key_underscore_by_space(self.dict(), None)
+        res = replace_key_underscore_by_space(self._to_dict(), None)
         for section, option in res.items():
             for key, value in option.items():
                 config[section][key] = value
@@ -191,8 +205,7 @@ class ConfigRepository(BaseModel):
     def write_config(self, name=None):
         if name is None:
             name = CONFIG_FILENAME
-        self.validate(self)
-        ConfigRepository(**self.dict())  # validate property before write
+        ConfigRepository._validate_dict(self._to_dict())
         config_to_write = ConfigRepository.get_default_config()
         self.config_dto_to_config_file(config_to_write)
         self._write(name, config_to_write)

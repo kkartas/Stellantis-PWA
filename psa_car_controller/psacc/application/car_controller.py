@@ -58,21 +58,29 @@ class PSACarController(metaclass=Singleton):
     def start_remote_control(self):
         if self.args.remote_disable:
             logger.info("mqtt disabled")
+            return False
         elif not self.args.web_conf or path.isfile(OTP_CONFIG_NAME):
             if self.myp.remote_client.mqtt_client is not None:
                 self.myp.remote_client.stop()
             try:
-                self.myp.remote_client.start()
+                started = self.myp.remote_client.start()
+                if not started:
+                    logger.error("Remote control failed to start")
+                    return False
                 if self.args.charge_control:
                     self.chc = ChargeControls.load_config(self.myp, name=self.args.charge_control)
                     self.chc.init()
                     self.myp.start_refresh_thread()
+                return True
             except (socket.timeout, ConnectionResetError):
                 logger.exception(
                     "Can't connect to mqtt broker your are not connected to internet or PSA MQTT server is "
                     "down !")
+                return False
             except ConfigException:
                 logger.error("start_remote_control failed redo otp config")
+                return False
+        return False
 
     def load_app(self) -> bool:
         my_logger(handler_level=int(self.args.debug))

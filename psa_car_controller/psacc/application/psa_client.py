@@ -1,9 +1,11 @@
 import json
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from json import JSONEncoder
 from hashlib import md5
 from sqlite3.dbapi2 import IntegrityError
+from typing import Any, Dict, List
 
 from oauth2_client.credentials_manager import ServiceInformation
 from urllib3.exceptions import InvalidHeader
@@ -23,7 +25,7 @@ from .abrp import Abrp
 from psa_car_controller.psacc.repository.db import Database
 from psa_car_controller.common.mylogger import CustomLogger
 
-SCOPE = ['openid profile']
+SCOPE = ["openid", "profile", "data:trip", "data:position"]
 CARS_FILE = "cars.json"
 DEFAULT_CONFIG_FILENAME = "config.json"
 
@@ -33,6 +35,8 @@ logger = CustomLogger.getLogger(__name__)
 class PSAClient:
     def connect(self, code: str):
         self.manager.connect_with_code(code)
+        self.api_config.access_token = self.manager.access_token or ""
+        self._next_refresh_retry_at = 0.0
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, refresh_token, client_id, client_secret, remote_refresh_token, customer_id, realm, country_code,
@@ -48,7 +52,7 @@ class PSAClient:
         self.manager = OpenIdCredentialManager.create(self.service_information,
                                                       realm_info[self.realm]["scheme"], self.country_code)
         self.api_config = Oauth2PSACCApiConfig()
-        self.api_config.set_refresh_callback(self.manager.refresh_token_now)
+        self.api_config.set_refresh_callback(self._refresh_access_token)
         self.manager.refresh_token = refresh_token
         self.account_info = AccountInformation(client_id, customer_id, realm, country_code)
         self.remote_access_token = None
@@ -60,6 +64,8 @@ class PSAClient:
         self.api_config.api_key['x-introspect-realm'] = self.realm
         self.remote_token_last_update = None
         self._record_enabled = False
+        self._next_refresh_retry_at = 0.0
+        self._refresh_backoff_seconds = 300
         self.weather_api = weather_api
         self.brand = brand
         self.info_callback = []
@@ -82,8 +88,21 @@ class PSAClient:
     def get_app_name(self):
         return realm_info[self.realm]['app_name']
 
+    def _refresh_access_token(self):
+        now = time.monotonic()
+        if now < self._next_refresh_retry_at:
+            return False
+        refreshed = self.manager.refresh_token_now()
+        self.api_config.access_token = self.manager.access_token or ""
+        if refreshed:
+            self._next_refresh_retry_at = 0.0
+            return True
+        self._next_refresh_retry_at = now + self._refresh_backoff_seconds
+        logger.warning("OAuth refresh failed; next retry in %ss", self._refresh_backoff_seconds)
+        return refreshed
+
     def api(self) -> VehiclesApi:
-        self.api_config.access_token = self.manager.access_token
+        self.api_config.access_token = self.manager.access_token or ""
         api_instance = VehiclesApi(OauthAPIClient(self.api_config))
         return api_instance
 
@@ -95,6 +114,229 @@ class PSAClient:
             self.api_config.proxy = proxies['http']
             self.abrp.proxies = proxies
         self.manager.proxies = proxies
+
+    @staticmethod
+    def _extract_embedded_vehicles(payload: Any) -> List[Dict[str, Any]]:
+        if not isinstance(payload, dict):
+            return []
+        embedded = payload.get("_embedded") or payload.get("embedded")
+        if isinstance(embedded, dict):
+            vehicles = embedded.get("vehicles")
+            if isinstance(vehicles, list):
+                return [vehicle for vehicle in vehicles if isinstance(vehicle, dict)]
+        vehicles = payload.get("vehicles")
+        if isinstance(vehicles, list):
+            return [vehicle for vehicle in vehicles if isinstance(vehicle, dict)]
+        return []
+
+    @staticmethod
+    def _looks_like_url(value: Any) -> bool:
+        if not isinstance(value, str):
+            return False
+        return value.startswith(("https://", "http://", "/"))
+
+    @classmethod
+    def _extract_picture_from_value(cls, value: Any, depth: int = 0):
+        if depth > 8:
+            return None
+        if isinstance(value, str):
+            if cls._looks_like_url(value):
+                return value
+            return None
+        if isinstance(value, list):
+            for item in value:
+                candidate = cls._extract_picture_from_value(item, depth + 1)
+                if candidate:
+                    return candidate
+            return None
+        if isinstance(value, dict):
+            for key in (
+                "href",
+                "url",
+                "src",
+                "link",
+                "uri",
+                "picture",
+                "pictureUrl",
+                "pictureURL",
+                "image",
+                "imageUrl",
+            ):
+                if key in value:
+                    candidate = cls._extract_picture_from_value(value.get(key), depth + 1)
+                    if candidate:
+                        return candidate
+            for nested_value in value.values():
+                candidate = cls._extract_picture_from_value(nested_value, depth + 1)
+                if candidate:
+                    return candidate
+        return None
+
+    @classmethod
+    def _extract_picture_url(cls, raw_vehicle: Dict[str, Any]):
+        containers = []
+        branding = raw_vehicle.get("branding")
+        if isinstance(branding, dict):
+            containers.append(branding.get("pictures"))
+            containers.append(branding)
+        containers.append(raw_vehicle.get("pictures"))
+
+        for container in containers:
+            if container is None:
+                continue
+            candidate = cls._extract_picture_from_value(container)
+            if candidate:
+                return candidate
+        return None
+
+    @staticmethod
+    def _extract_supports_electric(raw_vehicle: Dict[str, Any]):
+        engines = raw_vehicle.get("engine")
+        if not isinstance(engines, list):
+            return None
+
+        has_electric = False
+        for engine in engines:
+            if not isinstance(engine, dict):
+                continue
+            engine_class = engine.get("class") or engine.get("_class")
+            if isinstance(engine_class, str) and engine_class.lower() == "electric":
+                has_electric = True
+                break
+        if has_electric:
+            return True
+
+        onboard_capabilities = raw_vehicle.get("onboardCapabilities")
+        if isinstance(onboard_capabilities, list):
+            for capability in onboard_capabilities:
+                if isinstance(capability, str):
+                    lowered = capability.lower()
+                    if any(token in lowered for token in ("electric", "battery", "charge", "precond")):
+                        return True
+                elif isinstance(capability, dict):
+                    for key, value in capability.items():
+                        if isinstance(key, str) and isinstance(value, bool) and value:
+                            lowered = key.lower()
+                            if any(token in lowered for token in ("electric", "battery", "charge", "precond")):
+                                return True
+        elif isinstance(onboard_capabilities, dict):
+            for key, value in onboard_capabilities.items():
+                if isinstance(key, str) and isinstance(value, bool) and value:
+                    lowered = key.lower()
+                    if any(token in lowered for token in ("electric", "battery", "charge", "precond")):
+                        return True
+        return has_electric
+
+    @staticmethod
+    def _extract_brand_and_label(raw_vehicle: Dict[str, Any]):
+        brand = raw_vehicle.get("brand")
+        label = raw_vehicle.get("label")
+        branding = raw_vehicle.get("branding")
+        if isinstance(branding, dict):
+            if not brand:
+                brand = branding.get("brand") or branding.get("manufacturer")
+            if not label:
+                label = branding.get("label") or branding.get("name") or branding.get("model")
+        return brand, label
+
+    def _load_raw_vehicles_payload(self):
+        query_variants = [
+            [("extension", "branding"), ("extension", "onboardCapabilities")],
+            [("extension", "branding")],
+            None,
+        ]
+        last_error = None
+        for query_params in query_variants:
+            try:
+                return self.api().api_client.call_api(
+                    "/user/vehicles",
+                    "GET",
+                    query_params=query_params,
+                    response_type="object",
+                    auth_settings=["Vehicle_auth", "client_id", "realm"],
+                    _return_http_data_only=True,
+                )
+            except ApiException as ex:
+                last_error = ex
+                if ex.status in {400, 404}:
+                    continue
+                raise
+        if last_error is not None:
+            raise last_error
+        return None
+
+    def _load_raw_vehicle_detail(self, vehicle_id: str):
+        if not vehicle_id:
+            return None
+        query_variants = [
+            [("extension", "branding"), ("extension", "onboardCapabilities")],
+            [("extension", "branding")],
+            None,
+        ]
+        for query_params in query_variants:
+            try:
+                payload = self.api().api_client.call_api(
+                    "/user/vehicles/{id}",
+                    "GET",
+                    path_params={"id": vehicle_id},
+                    query_params=query_params,
+                    response_type="object",
+                    auth_settings=["Vehicle_auth", "client_id", "realm"],
+                    _return_http_data_only=True,
+                )
+                if isinstance(payload, dict):
+                    return payload
+            except ApiException as ex:
+                if ex.status in {400, 404}:
+                    continue
+                logger.debug("raw vehicle detail fetch failed for %s", vehicle_id, exc_info=True)
+                break
+            except (TypeError, ValueError, AttributeError):
+                logger.debug("raw vehicle detail payload invalid for %s", vehicle_id, exc_info=True)
+                break
+        return None
+
+    def _load_raw_vehicle_metadata(self) -> Dict[str, Dict[str, Any]]:
+        metadata_by_vin = {}
+        try:
+            raw_payload = self._load_raw_vehicles_payload()
+            for vehicle in self._extract_embedded_vehicles(raw_payload):
+                vin = vehicle.get("vin")
+                if not vin:
+                    continue
+                vehicle_id = vehicle.get("id")
+                brand, label = self._extract_brand_and_label(vehicle)
+                picture_url = self._extract_picture_url(vehicle)
+                supports_electric = self._extract_supports_electric(vehicle)
+
+                if (not picture_url or brand is None or label is None) and vehicle_id:
+                    detailed = self._load_raw_vehicle_detail(vehicle_id)
+                    if isinstance(detailed, dict):
+                        detailed_brand, detailed_label = self._extract_brand_and_label(detailed)
+                        if brand is None:
+                            brand = detailed_brand
+                        if label is None:
+                            label = detailed_label
+                        if not picture_url:
+                            picture_url = self._extract_picture_url(detailed)
+                        if supports_electric is None:
+                            supports_electric = self._extract_supports_electric(detailed)
+
+                metadata_by_vin[vin] = {
+                    "vehicle_id": vehicle_id,
+                    "brand": brand,
+                    "label": label,
+                    "picture_url": picture_url,
+                    "supports_electric": supports_electric,
+                }
+        except ApiException as ex:
+            if ex.status == 401:
+                logger.warning("get_vehicles raw metadata: unauthorized; re-authentication required")
+            else:
+                logger.debug("get_vehicles raw metadata failed", exc_info=True)
+        except (InvalidHeader, TypeError, ValueError, AttributeError):
+            logger.debug("get_vehicles raw metadata invalid", exc_info=True)
+        return metadata_by_vin
 
     def get_vehicle_info(self, vin, cache=False):
         res = None
@@ -110,7 +352,12 @@ class PSAClient:
                         if self._record_enabled:
                             self.record_info(car)
                         return res
-                except (ApiException, InvalidHeader) as ex:
+                except ApiException as ex:
+                    if ex.status == 401:
+                        logger.warning("get_vehicle_info: unauthorized; re-authentication required")
+                        break
+                    logger.error("get_vehicle_info: ApiException: %s", ex, exc_info_debug=True)
+                except (InvalidHeader, TypeError) as ex:
                     logger.error("get_vehicle_info: ApiException: %s", ex, exc_info_debug=True)
             car.status = res
         return res
@@ -137,12 +384,64 @@ class PSAClient:
             self.__refresh_vehicle_info()
 
     def get_vehicles(self):
+        raw_metadata = self._load_raw_vehicle_metadata()
         try:
             res = self.api().get_vehicles_by_device()
-            for vehicle in res.embedded.vehicles:
-                self.vehicles_list.add(Car(vehicle.vin, vehicle.id, vehicle.brand, vehicle.label))
+            embedded = getattr(res, "embedded", None)
+            vehicles = getattr(embedded, "vehicles", None) if embedded else None
+            if vehicles is None:
+                vehicles = []
+
+            for vehicle in vehicles:
+                vin = getattr(vehicle, "vin", None)
+                if not vin:
+                    continue
+                metadata = raw_metadata.get(vin, {})
+
+                supports_electric = None
+                engines = getattr(vehicle, "engine", None)
+                if isinstance(engines, list):
+                    for engine in engines:
+                        engine_class = getattr(engine, "_class", None)
+                        if isinstance(engine, dict):
+                            engine_class = engine.get("class") or engine.get("_class") or engine_class
+                        if isinstance(engine_class, str) and engine_class.lower() == "electric":
+                            supports_electric = True
+                            break
+
+                if supports_electric is None:
+                    supports_electric = metadata.get("supports_electric")
+
+                self.vehicles_list.add(Car(
+                    vin,
+                    getattr(vehicle, "id", None) or metadata.get("vehicle_id"),
+                    getattr(vehicle, "brand", None) or metadata.get("brand") or "Unknown",
+                    getattr(vehicle, "label", None) or metadata.get("label"),
+                    picture_url=metadata.get("picture_url"),
+                    supports_electric=supports_electric,
+                ))
+
+            for vin, metadata in raw_metadata.items():
+                if self.vehicles_list.get_car_by_vin(vin):
+                    continue
+                if not metadata.get("vehicle_id") or not metadata.get("brand"):
+                    continue
+                self.vehicles_list.add(Car(
+                    vin,
+                    metadata["vehicle_id"],
+                    metadata["brand"],
+                    metadata.get("label"),
+                    picture_url=metadata.get("picture_url"),
+                    supports_electric=metadata.get("supports_electric"),
+                ))
+
             self.vehicles_list.save_cars()
-        except (ApiException, InvalidHeader):
+        except ApiException as ex:
+            if ex.status == 401:
+                logger.warning("get_vehicles: unauthorized; re-authentication required")
+            else:
+                logger.exception("get_vehicles:")
+        except (InvalidHeader, TypeError):
             logger.exception("get_vehicles:")
         return self.vehicles_list
 

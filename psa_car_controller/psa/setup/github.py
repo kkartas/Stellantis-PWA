@@ -1,5 +1,6 @@
 import bz2
 import logging
+import time
 from hashlib import sha1
 from os import path
 
@@ -7,6 +8,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 TIMEOUT_IN_S = 10
+# Avoid hitting GitHub API for checksum on each setup attempt.
+# If a local archive was checked recently, trust it for a while.
+SHA_CHECK_INTERVAL_IN_S = 24 * 60 * 60
 
 
 def get_github_sha_from_file(user, repo, directory, filename):
@@ -22,6 +26,12 @@ def get_github_sha_from_file(user, repo, directory, filename):
 
 def github_file_need_to_be_downloaded(user, repo, directory, filename):
     try:
+        if path.isfile(filename):
+            age = time.time() - path.getmtime(filename)
+            if age < SHA_CHECK_INTERVAL_IN_S:
+                logger.debug("Skip github checksum for %s (age=%ss)", filename, int(age))
+                return False
+
         with open(filename, 'rb') as file_for_hash:
             data = file_for_hash.read()
             filesize = len(data)

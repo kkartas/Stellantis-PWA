@@ -47,10 +47,39 @@ class RemoteClient:
         self.last_request = None
         self.mqtt_client = None
         self.otp = None
+        self.last_error = None
+        self.last_error_code = None
         self._lock = threading.Lock()
         self.update_thread: threading.Timer = None
+        self._mqtt_connect_event = threading.Event()
+        self._mqtt_connect_code = None
 
-    def __on_mqtt_connect(self, client, userdata, result_code, _):  # pylint: disable=unused-argument
+    def _set_last_error(self, code: str, message: str):
+        self.last_error_code = code
+        self.last_error = message
+
+    def _clear_last_error(self):
+        self.last_error_code = None
+        self.last_error = None
+
+    def __on_mqtt_connect(self, client, userdata, flags, result_code):  # pylint: disable=unused-argument
+        self._mqtt_connect_code = result_code
+        if result_code != 0:
+            if result_code == 5:
+                self._set_last_error(
+                    "mqtt_forbidden",
+                    "Remote broker refused connection (code 5: not authorized). "
+                    "Please send a new OTP SMS and complete OTP setup again.",
+                )
+            else:
+                self._set_last_error(
+                    "mqtt_connect",
+                    f"Remote broker refused connection (code {result_code}: {mqtt.error_string(result_code)}).",
+                )
+            logger.warning("MQTT connect refused with result code %s (%s)", result_code, mqtt.error_string(result_code))
+            self._mqtt_connect_event.set()
+            return
+
         logger.info("Connected with result code %s", result_code)
         topics = [MQTT_RESP_TOPIC + self.account_info.get_mqtt_customer_id() + "/#"]
         for car in self.vehicles_list:
@@ -58,13 +87,29 @@ class RemoteClient:
         for topic in topics:
             client.subscribe(topic)
             logger.info("subscribe to %s", topic)
+        self._mqtt_connect_event.set()
 
     def _on_mqtt_disconnect(self, client, userdata, result_code):  # pylint: disable=unused-argument
         logger.warning("Disconnected with result code %d", result_code)
         if result_code == 1:
             self._refresh_remote_token(force=True)
-        else:
+        elif result_code == 5:
+            self._set_last_error(
+                "mqtt_forbidden",
+                "Remote broker refused connection (code 5: not authorized). "
+                "Please send a new OTP SMS and complete OTP setup again.",
+            )
             logger.warning(mqtt.error_string(result_code))
+        else:
+            if result_code != 0:
+                self._set_last_error(
+                    "mqtt_disconnect",
+                    f"Remote control disconnected (code {result_code}: {mqtt.error_string(result_code)}).",
+                )
+            logger.warning(mqtt.error_string(result_code))
+        if not self._mqtt_connect_event.is_set():
+            self._mqtt_connect_code = result_code
+            self._mqtt_connect_event.set()
 
     def _on_mqtt_message(self, client, userdata, msg):  # pylint: disable=unused-argument
         try:
@@ -107,6 +152,9 @@ class RemoteClient:
                 logger.exception("on_mqtt_message:")
 
     def start(self):
+        self._clear_last_error()
+        self._mqtt_connect_event.clear()
+        self._mqtt_connect_code = None
         if self.load_otp():
             self.mqtt_client = mqtt.Client(clean_session=True, protocol=mqtt.MQTTv311)
             if environ.get("MQTT_LOG", "0") == "1":
@@ -118,8 +166,30 @@ class RemoteClient:
                 self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
                 self.mqtt_client.connect(MQTT_SERVER, 8885, 60)
                 self.mqtt_client.loop_start()
+                connected = self._mqtt_connect_event.wait(timeout=12)
+                if not connected:
+                    self._set_last_error(
+                        "mqtt_timeout",
+                        "Remote control connection timed out. Check network and retry OTP setup.",
+                    )
+                    self.stop()
+                    return False
+
+                is_connected = self.mqtt_client.is_connected()
+                if self._mqtt_connect_code != 0 or not is_connected:
+                    if self.last_error is None:
+                        self._set_last_error(
+                            "mqtt_connect",
+                            "Remote control connection failed. Please send OTP SMS and retry OTP setup.",
+                        )
+                    self.stop()
+                    return False
                 self.__keep_mqtt()
-                return self.mqtt_client.is_connected()
+                return True
+            if self.last_error is None:
+                self._set_last_error("remote_token", "Remote token refresh failed. Please redo OTP setup.")
+        elif self.last_error is None:
+            self._set_last_error("otp_missing", "OTP configuration is missing. Please complete OTP setup.")
         logger.error("Can't configure MQTT Client")
         return False
 
@@ -127,6 +197,7 @@ class RemoteClient:
         if self.mqtt_client:
             self.mqtt_client.on_disconnect = None
             self.mqtt_client.disconnect()
+            self.mqtt_client.loop_stop()
         if self.update_thread:
             self.update_thread.cancel()
 
@@ -189,8 +260,29 @@ class RemoteClient:
                     self._get_remote_access_token(otp_code)
                 self.remote_token_last_update = datetime.now()
                 self.mqtt_client.username_pw_set("IMA_OAUTH_ACCESS_TOKEN", self.remoteCredentials.access_token)
+                self._clear_last_error()
                 return True
-            except (RequestException, RateLimitException, KeyError, AttributeError, RemoteException):
+            except RateLimitException:
+                self._set_last_error("otp_rate_limit", "OTP rate limit reached. Please retry later.")
+                logger.exception("Can't refresh remote token, please redo otp procedure")
+                return False
+            except RequestException:
+                self._set_last_error("network", "Network error while configuring remote control.")
+                logger.exception("Can't refresh remote token, please redo otp procedure")
+                return False
+            except RemoteException as ex:
+                error_text = str(ex)
+                if "invalid_grant" in error_text or "NOK:FORBIDDEN" in error_text or "FORBIDDEN" in error_text:
+                    self._set_last_error(
+                        "otp_expired",
+                        "Remote control session expired. Please send OTP SMS and complete OTP setup again.",
+                    )
+                else:
+                    self._set_last_error("remote_token", "Remote token refresh failed. Please redo OTP setup.")
+                logger.exception("Can't refresh remote token, please redo otp procedure")
+                return False
+            except (KeyError, AttributeError):
+                self._set_last_error("remote_token", "Remote token refresh failed. Please redo OTP setup.")
                 logger.exception("Can't refresh remote token, please redo otp procedure")
                 return False
 
@@ -221,6 +313,11 @@ class RemoteClient:
             self.remoteCredentials.access_token = data["access_token"]
             self.remoteCredentials.refresh_token = data["refresh_token"]
         except KeyError as e:
+            if isinstance(data, dict) and data.get("error") == "invalid_grant":
+                self._set_last_error(
+                    "otp_expired",
+                    "Remote control session expired. Please send OTP SMS and complete OTP setup again.",
+                )
             raise RemoteException("get_remote_access_token: bad response" + str(data)) from e
         return res
 
@@ -270,6 +367,7 @@ class RemoteClient:
     def load_otp(self, force_new=False):
         otp_session = load_otp()
         if otp_session is None or force_new:
+            self._set_last_error("otp_missing", "OTP configuration is missing. Please complete OTP setup.")
             logger.error("Please redo otp config")
             return False
         self.otp = otp_session

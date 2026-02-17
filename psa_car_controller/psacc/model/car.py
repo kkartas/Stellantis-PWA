@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 class Car:
     def __init__(self, vin, vehicle_id, brand, label=None, battery_power=None, fuel_capacity=None,
-                 max_elec_consumption=None, max_fuel_consumption=None, abrp_name=None):
+                 max_elec_consumption=None, max_fuel_consumption=None, abrp_name=None,
+                 picture_url=None, supports_electric=None):
         self.vin = vin
         model = None
         if label is not None:
@@ -22,11 +23,15 @@ class Car:
         self.label = label
         self.brand = brand
         self._status = None
-        self.abrp_name = abrp_name or model.abrp_name
-        self.battery_power = battery_power or model.battery_power
-        self.fuel_capacity = fuel_capacity or model.fuel_capacity
-        self.max_elec_consumption = max_elec_consumption or model.max_elec_consumption  # kwh/100Km
-        self.max_fuel_consumption = max_fuel_consumption or model.max_fuel_consumption  # L/100Km
+        self.abrp_name = abrp_name if abrp_name is not None else model.abrp_name
+        self.battery_power = battery_power if battery_power is not None else model.battery_power
+        self.fuel_capacity = fuel_capacity if fuel_capacity is not None else model.fuel_capacity
+        self.max_elec_consumption = max_elec_consumption if max_elec_consumption is not None \
+            else model.max_elec_consumption  # kwh/100Km
+        self.max_fuel_consumption = max_fuel_consumption if max_fuel_consumption is not None \
+            else model.max_fuel_consumption  # L/100Km
+        self.picture_url = picture_url
+        self.supports_electric = supports_electric
 
     def set_model_name(self, name):
         self.label = name
@@ -45,6 +50,11 @@ class Car:
 
     def has_fuel(self):
         return self.fuel_capacity > 0
+
+    def supports_electric_features(self) -> bool:
+        if self.supports_electric is None:
+            return self.has_battery()
+        return bool(self.supports_electric)
 
     def get_status(self):
         if self.status is not None:
@@ -108,9 +118,36 @@ class Cars(list):
         car_with_same_vin = self.get_car_by_vin(car.vin)
         if not car_with_same_vin:
             self.append(car)
+            return
         elif car_with_same_vin.vehicle_id != car.vehicle_id:
             logger.warning("Vehicle ID changed !")
             car_with_same_vin.vehicle_id = car.vehicle_id
+        else:
+            # Refresh stale vehicle metadata when newer model resolution is available.
+            should_refresh = (
+                car_with_same_vin.label == "unknown" and car.label != "unknown"
+            ) or (
+                car_with_same_vin.battery_power != car.battery_power
+                and car.label != "unknown"
+            ) or (
+                car_with_same_vin.fuel_capacity != car.fuel_capacity
+                and car.label != "unknown"
+            )
+            if should_refresh:
+                logger.info("Refreshing vehicle model metadata for %s", car.vin)
+                current_abrp_name = car_with_same_vin.abrp_name
+                car_with_same_vin.label = car.label
+                car_with_same_vin.brand = car.brand
+                car_with_same_vin.battery_power = car.battery_power
+                car_with_same_vin.fuel_capacity = car.fuel_capacity
+                car_with_same_vin.max_elec_consumption = car.max_elec_consumption
+                car_with_same_vin.max_fuel_consumption = car.max_fuel_consumption
+                if current_abrp_name is None:
+                    car_with_same_vin.abrp_name = car.abrp_name
+        if getattr(car, "picture_url", None):
+            car_with_same_vin.picture_url = car.picture_url
+        if getattr(car, "supports_electric", None) is not None:
+            car_with_same_vin.supports_electric = car.supports_electric
 
     @classmethod
     def from_json(cls, data: list):
