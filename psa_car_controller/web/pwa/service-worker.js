@@ -1,5 +1,5 @@
-const SHELL_CACHE = "psacc-shell-v3";
-const API_CACHE = "psacc-api-v3";
+const SHELL_CACHE = "psacc-shell-v4";
+const API_CACHE = "psacc-api-v4";
 
 const SHELL_FILES = [
   "./",
@@ -23,6 +23,12 @@ const SHELL_FILES = [
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_FILES)));
   self.skipWaiting();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {
@@ -58,9 +64,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
-  );
+  event.respondWith(staleWhileRevalidate(event, SHELL_CACHE));
 });
 
 async function networkFirst(request, cacheName) {
@@ -78,4 +82,29 @@ async function networkFirst(request, cacheName) {
     }
     throw _error;
   }
+}
+
+async function staleWhileRevalidate(event, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(event.request);
+  const networkFetch = fetch(event.request)
+    .then((response) => {
+      if (response && response.ok) {
+        cache.put(event.request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    event.waitUntil(networkFetch);
+    return cached;
+  }
+
+  const response = await networkFetch;
+  if (response) {
+    return response;
+  }
+
+  return new Response("", { status: 504, statusText: "Offline" });
 }

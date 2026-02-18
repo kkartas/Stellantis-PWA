@@ -217,5 +217,5 @@ class InitialSetup:
                 chc = ChargeControl(self.psacc, vehicle.vin, 100, [0, 0])
                 charge_controls[vehicle.vin] = chc
         charge_controls.save_config()
-        app.load_app()
-        app.start_remote_control()
+        # OTP is configured in a later step, so skip remote startup here to keep OAuth setup fast.
+        app.load_app(start_remote=False)

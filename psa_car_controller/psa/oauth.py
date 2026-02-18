@@ -4,6 +4,7 @@ import secrets
 import base64
 import time
 from typing import Tuple
+from urllib.parse import quote
 
 from http import HTTPStatus
 from typing import Optional
@@ -51,10 +52,32 @@ class OpenIdCredentialManager(CredentialManager):
         return {"grant_type": 'password', "username": login, "scope": ' '.join(self.service_information.scopes),
                 "password": password, "realm": realm}
 
-    def generate_redirect_url(self):
+    @staticmethod
+    def _normalize_scopes(scopes) -> list:
+        if scopes is None:
+            return []
+        if isinstance(scopes, str):
+            return [scope for scope in scopes.replace(",", " ").split() if scope]
+        try:
+            return [str(scope).strip() for scope in scopes if str(scope).strip()]
+        except TypeError:
+            return []
+
+    def generate_authorize_url_for_scopes(self, redirect_uri: str, state: str, scopes=None, **kwargs) -> str:
+        requested_scopes = self._normalize_scopes(scopes) or list(self.service_information.scopes)
+        parameters = dict(client_id=self.service_information.client_id,
+                          redirect_uri=redirect_uri,
+                          response_type='code',
+                          scope=' '.join(requested_scopes),
+                          state=state,
+                          **kwargs)
+        return '%s?%s' % (self.service_information.authorize_service,
+                          '&'.join('%s=%s' % (k, quote(v, safe='~()*!.\'')) for k, v in parameters.items()))
+
+    def generate_redirect_url(self, scopes=None):
         self.code_verifier, code_challenge = generate_sha256_pkce(64)
-        return self.generate_authorize_url(self.redirect_uri, secrets.token_urlsafe(16),
-                                           code_challenge=code_challenge, code_challenge_method="S256")
+        return self.generate_authorize_url_for_scopes(self.redirect_uri, secrets.token_urlsafe(16), scopes=scopes,
+                                                      code_challenge=code_challenge, code_challenge_method="S256")
 
     def connect_with_code(self, code: str):
         assert len(code) == 36, "Invalid code length"
@@ -112,6 +135,29 @@ class OpenIdCredentialManager(CredentialManager):
             return True
         except OAuthError as e:
             error_text = str(e)
+            lowered_error = error_text.lower()
+            if "invalid_scope" in lowered_error:
+                current_scopes = self._normalize_scopes(self.service_information.scopes)
+                fallback_candidates = []
+                if any(scope in current_scopes for scope in ("data:trip", "data:position")):
+                    fallback_candidates.append(["openid", "profile", "data:vehicle:devices:pnc"])
+                fallback_candidates.append(["openid", "profile"])
+
+                for fallback_scopes in fallback_candidates:
+                    self.service_information.scopes = fallback_scopes
+                    logger.warning(
+                        "OAuth scopes rejected; retrying refresh with reduced scopes: %s",
+                        " ".join(fallback_scopes),
+                    )
+                    try:
+                        self._refresh_token()
+                        for refresh_callback in self.refresh_callbacks:
+                            refresh_callback()
+                        self._refresh_retry_after = 0.0
+                        return True
+                    except OAuthError as fallback_error:
+                        error_text = str(fallback_error)
+                        logger.warning("Reduced-scope refresh failed: %s", fallback_error)
             retry_seconds = 900 if "invalid_grant" in error_text else 300
             self._refresh_retry_after = max(self._refresh_retry_after, now + retry_seconds)
             logger.warning("Can't refresh token: %s (next retry in %ss)", e, retry_seconds)
@@ -164,11 +210,18 @@ class Oauth2PSACCApiConfig(connected_car_api.Configuration):
 
 
 class OauthAPIClient(ApiClient):
-    def _refresh_if_needed(self, auth_settings=None):
+    @staticmethod
+    def _is_unauthorized(api_exception: ApiException) -> bool:
+        status = getattr(api_exception, "status", None)
+        reason = str(getattr(api_exception, "reason", "") or "").lower()
+        body = str(getattr(api_exception, "body", "") or "").lower()
+        return status == 401 or "unauthorized" in reason or "token is invalid" in body
+
+    def _refresh_if_needed(self, auth_settings=None, force=False):
         needs_vehicle_auth = bool(auth_settings and 'Vehicle_auth' in auth_settings)
         if not needs_vehicle_auth:
             return True
-        if self.configuration.access_token:
+        if self.configuration.access_token and not force:
             return True
         try:
             return bool(self.configuration.refresh_callback())
@@ -204,8 +257,8 @@ class OauthAPIClient(ApiClient):
                                                                collection_formats,
                                                                _preload_content, _request_timeout))
             except ApiException as e:
-                if e.reason == 'Unauthorized':
-                    if not self._refresh_if_needed(auth_settings):
+                if self._is_unauthorized(e):
+                    if not self._refresh_if_needed(auth_settings, force=True):
                         raise e
                 else:
                     raise e

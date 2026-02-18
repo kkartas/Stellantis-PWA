@@ -76,7 +76,7 @@ class Trip:
 
     def get_info(self):
 
-        res = {"consumption_km": self.consumption_km, "start_at": self.start_at,
+        res = {"consumption_km": self.consumption_km, "start_at": self.start_at, "end_at": self.end_at,
                "consumption_by_temp": self.get_temperature(), "positions": self.get_positions(),
                "duration": self.duration * 60, "speed_average": self.speed_average, "distance": self.distance,
                "mileage": self.mileage, "altitude_diff": self.altitude_diff, "id": self.id,
@@ -86,6 +86,7 @@ class Trip:
             res["consumption_km"] = self.consumption_km
 
         if self.car.has_fuel():
+            res["consumption_fuel"] = self.consumption_fuel
             res["consumption_fuel_km"] = self.consumption_fuel_km
 
         return res

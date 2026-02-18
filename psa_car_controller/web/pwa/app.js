@@ -8,6 +8,13 @@ const state = {
   isAuthenticated: false,
   isElectricVehicle: true,
   remoteControlReady: false,
+  tripsRaw: [],
+  tripsFiltered: [],
+  tripMaps: new Map(),
+  tripPathCache: new Map(),
+  tripPathRequests: new Map(),
+  overviewMap: null,
+  overviewMapMarker: null,
   busyButtons: new WeakSet(),
 };
 
@@ -19,7 +26,8 @@ const refs = {
   toast: document.getElementById("toast"),
   tabs: Array.from(document.querySelectorAll(".tab")),
   panels: Array.from(document.querySelectorAll(".tab-panel")),
-  positionLink: document.getElementById("position-link"),
+  overviewPositionMap: document.getElementById("overview-position-map"),
+  overviewPositionEmpty: document.getElementById("overview-position-empty"),
   tripsBody: document.getElementById("trips-body"),
   chargingBody: document.getElementById("charging-body"),
   oauthMessage: document.getElementById("oauth-message"),
@@ -35,6 +43,22 @@ const refs = {
   vehicleVin: document.getElementById("vehicle-vin"),
   tripsFuelHeader: document.getElementById("trips-fuel-header"),
   summaryConsumptionLabel: document.getElementById("summary-consumption-label"),
+  tripFiltersForm: document.getElementById("trip-filters-form"),
+  tripFilterFrom: document.getElementById("trip-filter-from"),
+  tripFilterTo: document.getElementById("trip-filter-to"),
+  tripFilterMinDistance: document.getElementById("trip-filter-min-distance"),
+  tripFilterMaxDistance: document.getElementById("trip-filter-max-distance"),
+  tripFilterSort: document.getElementById("trip-filter-sort"),
+  tripFiltersReset: document.getElementById("trip-filters-reset"),
+  tripFilterSummary: document.getElementById("trip-filter-summary"),
+  tripStatCount: document.getElementById("trip-stat-count"),
+  tripStatDistance: document.getElementById("trip-stat-distance"),
+  tripStatDuration: document.getElementById("trip-stat-duration"),
+  tripStatSpeed: document.getElementById("trip-stat-speed"),
+  tripStatLongest: document.getElementById("trip-stat-longest"),
+  tripStatConsumption: document.getElementById("trip-stat-consumption"),
+  tripStatConsumptionLabel: document.getElementById("trip-stat-consumption-label"),
+  liveSignals: document.getElementById("live-signals"),
 };
 
 function showToast(message, type = "ok") {
@@ -114,7 +138,12 @@ function fmtDate(value) {
   if (Number.isNaN(parsed.getTime())) {
     return String(value);
   }
-  return parsed.toLocaleString();
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const year = parsed.getFullYear();
+  const hour = String(parsed.getHours()).padStart(2, "0");
+  const minute = String(parsed.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hour}:${minute}`;
 }
 
 function average(values) {
@@ -123,6 +152,472 @@ function average(values) {
     return null;
   }
   return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+}
+
+function toFiniteNumber(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) {
+    return null;
+  }
+  return numberValue;
+}
+
+function getTripFuelMetrics(trip) {
+  const distance = toFiniteNumber(trip && trip.distance);
+  const durationMinutes = toFiniteNumber(trip && trip.duration);
+  const litersPer100Km = toFiniteNumber(trip && trip.consumption_fuel_km);
+
+  const hasValidBase =
+    Number.isFinite(distance) &&
+    distance > 0 &&
+    Number.isFinite(durationMinutes) &&
+    durationMinutes > 0 &&
+    Number.isFinite(litersPer100Km) &&
+    litersPer100Km > 0;
+
+  if (!hasValidBase) {
+    return {
+      liters: 0,
+      distance: 0,
+      includeInAverage: false,
+    };
+  }
+
+  const directFuelValue = toFiniteNumber(trip && trip.consumption_fuel);
+  const liters =
+    Number.isFinite(directFuelValue) && directFuelValue > 0
+      ? directFuelValue
+      : (litersPer100Km * distance) / 100;
+
+  if (!Number.isFinite(liters) || liters <= 0) {
+    return {
+      liters: 0,
+      distance: 0,
+      includeInAverage: false,
+    };
+  }
+
+  return {
+    liters,
+    distance,
+    includeInAverage: true,
+  };
+}
+
+function getTripFuelConsumedLiters(trip) {
+  return getTripFuelMetrics(trip).liters;
+}
+
+function fuelConsumptionPer100Km(trips) {
+  const totals = (Array.isArray(trips) ? trips : []).reduce(
+    (aggregate, trip) => {
+      const metrics = getTripFuelMetrics(trip);
+      if (!metrics.includeInAverage) {
+        return aggregate;
+      }
+      aggregate.distance += metrics.distance;
+      aggregate.fuel += metrics.liters;
+      return aggregate;
+    },
+    { distance: 0, fuel: 0 },
+  );
+
+  if (totals.distance <= 0) {
+    return null;
+  }
+  return (totals.fuel / totals.distance) * 100;
+}
+
+function normalizeTripPoint(point) {
+  if (!point || typeof point !== "object") {
+    return null;
+  }
+  const latitude = toFiniteNumber(point.latitude ?? point.lat);
+  const longitude = toFiniteNumber(point.longitude ?? point.lng ?? point.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+  const fallbackUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`;
+  return {
+    latitude,
+    longitude,
+    mapUrl: point.openstreetmap_url || point.google_maps_url || fallbackUrl,
+  };
+}
+
+function tripPointFromLegacyPositions(trip, index) {
+  const positions = trip && typeof trip === "object" ? trip.positions : null;
+  if (!positions || typeof positions !== "object") {
+    return null;
+  }
+  const latitudes = Array.isArray(positions.lat) ? positions.lat : [];
+  const longitudes = Array.isArray(positions.long) ? positions.long : [];
+  if (latitudes.length === 0 || longitudes.length === 0) {
+    return null;
+  }
+  const safeIndex = index < 0 ? latitudes.length - 1 : index;
+  if (safeIndex < 0 || safeIndex >= latitudes.length || safeIndex >= longitudes.length) {
+    return null;
+  }
+  return normalizeTripPoint({
+    latitude: latitudes[safeIndex],
+    longitude: longitudes[safeIndex],
+  });
+}
+
+function getTripStartPoint(trip) {
+  return normalizeTripPoint(trip.start_position) || tripPointFromLegacyPositions(trip, 0);
+}
+
+function getTripEndPoint(trip) {
+  return normalizeTripPoint(trip.end_position) || tripPointFromLegacyPositions(trip, -1);
+}
+
+function tripPrimaryDate(trip) {
+  return new Date(trip.start_at || trip.end_at || 0);
+}
+
+function tripTimestamp(trip) {
+  const date = tripPrimaryDate(trip);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function tripPointCoordinateLabel(point) {
+  return `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`;
+}
+
+function tripColumnCount() {
+  return state.isElectricVehicle ? 7 : 6;
+}
+
+function tripMapContainerId(tripIndex) {
+  return `trip-map-${tripIndex}`;
+}
+
+function tripPathCacheKey(vin, tripId) {
+  if (!vin || !tripId) {
+    return null;
+  }
+  return `${vin}:${tripId}`;
+}
+
+function tripPathPointsFromPositions(positions) {
+  if (!positions || typeof positions !== "object") {
+    return [];
+  }
+  const latitudes = Array.isArray(positions.lat) ? positions.lat : [];
+  const longitudes = Array.isArray(positions.long) ? positions.long : [];
+  const pointCount = Math.min(latitudes.length, longitudes.length);
+  const points = [];
+  for (let index = 0; index < pointCount; index += 1) {
+    const normalized = normalizeTripPoint({
+      latitude: latitudes[index],
+      longitude: longitudes[index],
+    });
+    if (normalized) {
+      points.push(normalized);
+    }
+  }
+  return points;
+}
+
+function compactTripPath(points) {
+  if (!Array.isArray(points) || points.length === 0) {
+    return [];
+  }
+  const compacted = [];
+  points.forEach((point) => {
+    if (!point) {
+      return;
+    }
+    const normalized = normalizeTripPoint(point);
+    if (!normalized) {
+      return;
+    }
+    const previous = compacted[compacted.length - 1];
+    if (previous && previous.latitude === normalized.latitude && previous.longitude === normalized.longitude) {
+      return;
+    }
+    compacted.push(normalized);
+  });
+  return compacted;
+}
+
+function downsampleTripPath(points, maxPoints = 320) {
+  if (!Array.isArray(points) || points.length <= maxPoints) {
+    return points;
+  }
+  const result = [];
+  const step = (points.length - 1) / (maxPoints - 1);
+  for (let index = 0; index < maxPoints; index += 1) {
+    const sourceIndex = Math.round(index * step);
+    const point = points[sourceIndex];
+    if (!point) {
+      continue;
+    }
+    result.push(point);
+  }
+  return compactTripPath(result);
+}
+
+async function fetchTripPath(trip) {
+  const tripId = trip && trip.id ? String(trip.id) : "";
+  const vin = trip && trip.vin ? String(trip.vin) : state.selectedVin;
+  const cacheKey = tripPathCacheKey(vin, tripId);
+  if (!cacheKey) {
+    return null;
+  }
+  if (state.tripPathCache.has(cacheKey)) {
+    return state.tripPathCache.get(cacheKey);
+  }
+  if (state.tripPathRequests.has(cacheKey)) {
+    return state.tripPathRequests.get(cacheKey);
+  }
+
+  const requestPromise = apiRequest(`api/trips/${encodeURIComponent(vin)}/${encodeURIComponent(tripId)}/path`)
+    .then((payload) => {
+      const normalizedPoints = compactTripPath(Array.isArray(payload.points) ? payload.points : []);
+      const normalizedPayload = {
+        ...payload,
+        points: normalizedPoints,
+        start_position: normalizeTripPoint(payload.start_position) || normalizedPoints[0] || null,
+        end_position: normalizeTripPoint(payload.end_position) || normalizedPoints[normalizedPoints.length - 1] || null,
+      };
+      state.tripPathCache.set(cacheKey, normalizedPayload);
+      return normalizedPayload;
+    })
+    .finally(() => {
+      state.tripPathRequests.delete(cacheKey);
+    });
+
+  state.tripPathRequests.set(cacheKey, requestPromise);
+  return requestPromise;
+}
+
+function destroyTripMaps() {
+  state.tripMaps.forEach((mapInstance) => {
+    try {
+      mapInstance.remove();
+    } catch (_error) {
+      // Ignore map disposal errors.
+    }
+  });
+  state.tripMaps.clear();
+}
+
+function setTripDetailExpanded(tripIndex, expanded) {
+  const summaryRow = refs.tripsBody.querySelector(`.trip-summary-row[data-trip-index="${tripIndex}"]`);
+  const detailRow = refs.tripsBody.querySelector(`.trip-detail-row[data-trip-index="${tripIndex}"]`);
+  if (!summaryRow || !detailRow) {
+    return;
+  }
+
+  summaryRow.classList.toggle("is-open", expanded);
+  summaryRow.setAttribute("aria-expanded", expanded ? "true" : "false");
+  detailRow.classList.toggle("hidden", !expanded);
+
+  const icon = summaryRow.querySelector(".trip-expand-icon");
+  if (icon) {
+    icon.textContent = expanded ? "v" : ">";
+  }
+}
+
+function collapseTripDetails(exceptIndex = null) {
+  refs.tripsBody.querySelectorAll(".trip-summary-row").forEach((summaryRow) => {
+    const rowIndex = Number(summaryRow.dataset.tripIndex);
+    if (!Number.isFinite(rowIndex) || rowIndex === exceptIndex) {
+      return;
+    }
+    setTripDetailExpanded(rowIndex, false);
+  });
+}
+
+async function renderTripMap(trip, tripIndex) {
+  const mapId = tripMapContainerId(tripIndex);
+  if (state.tripMaps.has(mapId)) {
+    const existingMap = state.tripMaps.get(mapId);
+    window.setTimeout(() => existingMap.invalidateSize(), 0);
+    return;
+  }
+
+  const mapContainer = document.getElementById(mapId);
+  if (!mapContainer) {
+    return;
+  }
+  if (!window.L) {
+    mapContainer.innerHTML = '<p class="trip-map-empty">Map library not available.</p>';
+    return;
+  }
+
+  mapContainer.innerHTML = '<p class="trip-map-empty">Loading trip map...</p>';
+
+  let pathPoints = compactTripPath(tripPathPointsFromPositions(trip && trip.positions));
+  let startPoint = getTripStartPoint(trip);
+  let endPoint = getTripEndPoint(trip);
+
+  const canFetchPath = Boolean(trip && trip.id && (trip.vin || state.selectedVin));
+  const shouldFetchPath = canFetchPath && pathPoints.length < 3;
+  if (shouldFetchPath) {
+    try {
+      const remotePath = await fetchTripPath(trip);
+      if (remotePath) {
+        if (Array.isArray(remotePath.points) && remotePath.points.length > 0) {
+          pathPoints = compactTripPath(remotePath.points);
+        }
+        startPoint = normalizeTripPoint(remotePath.start_position) || startPoint;
+        endPoint = normalizeTripPoint(remotePath.end_position) || endPoint;
+      }
+    } catch (error) {
+      if (!(pathPoints.length > 0 || startPoint || endPoint)) {
+        mapContainer.innerHTML = `<p class="trip-map-empty">${escapeHtml(error.message || "Trip path unavailable")}</p>`;
+        return;
+      }
+    }
+  }
+
+  const hasPath = pathPoints.length >= 2;
+  if (!startPoint && pathPoints.length > 0) {
+    startPoint = pathPoints[0];
+  }
+  if (!endPoint && pathPoints.length > 0) {
+    endPoint = pathPoints[pathPoints.length - 1];
+  }
+
+  if (!startPoint && !endPoint && !hasPath) {
+    mapContainer.innerHTML = '<p class="trip-map-empty">No map coordinates available for this trip.</p>';
+    return;
+  }
+
+  mapContainer.innerHTML = "";
+  const mapInstance = window.L.map(mapContainer, { zoomControl: true });
+  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(mapInstance);
+
+  const bounds = [];
+  if (hasPath) {
+    const sampledPath = downsampleTripPath(pathPoints);
+    const latLngs = sampledPath.map((point) => [point.latitude, point.longitude]);
+    window.L.polyline(latLngs, {
+      color: "#60a5fa",
+      weight: 4,
+      opacity: 0.92,
+      lineJoin: "round",
+    }).addTo(mapInstance);
+    latLngs.forEach((latLng) => bounds.push(latLng));
+  }
+
+  if (startPoint) {
+    const startLatLng = [startPoint.latitude, startPoint.longitude];
+    window.L.circleMarker(startLatLng, {
+      radius: 8,
+      color: "#14532d",
+      weight: 2,
+      fillColor: "#22c55e",
+      fillOpacity: 0.95,
+    }).bindTooltip("Start").addTo(mapInstance);
+    bounds.push(startLatLng);
+  }
+
+  if (endPoint) {
+    const endLatLng = [endPoint.latitude, endPoint.longitude];
+    window.L.circleMarker(endLatLng, {
+      radius: 8,
+      color: "#7f1d1d",
+      weight: 2,
+      fillColor: "#ef4444",
+      fillOpacity: 0.95,
+    }).bindTooltip("End").addTo(mapInstance);
+    bounds.push(endLatLng);
+  }
+
+  if (bounds.length === 1) {
+    mapInstance.setView(bounds[0], 14);
+  } else {
+    mapInstance.fitBounds(bounds, { padding: [28, 28] });
+  }
+
+  state.tripMaps.set(mapId, mapInstance);
+  window.setTimeout(() => mapInstance.invalidateSize(), 80);
+}
+
+async function toggleTripDetail(tripIndex, trips) {
+  const summaryRow = refs.tripsBody.querySelector(`.trip-summary-row[data-trip-index="${tripIndex}"]`);
+  if (!summaryRow) {
+    return;
+  }
+  const isOpen = summaryRow.classList.contains("is-open");
+  collapseTripDetails(isOpen ? null : tripIndex);
+  setTripDetailExpanded(tripIndex, !isOpen);
+  if (!isOpen && trips[tripIndex]) {
+    await renderTripMap(trips[tripIndex], tripIndex);
+  }
+}
+
+function wireTripRows(trips) {
+  refs.tripsBody.querySelectorAll(".trip-summary-row").forEach((summaryRow) => {
+    summaryRow.addEventListener("click", async () => {
+      const tripIndex = Number(summaryRow.dataset.tripIndex);
+      if (!Number.isFinite(tripIndex)) {
+        return;
+      }
+      try {
+        await toggleTripDetail(tripIndex, trips);
+      } catch (error) {
+        showToast(error.message || "Unable to load trip map", "bad");
+      }
+    });
+  });
+}
+
+function tripDetailActions(startPoint, endPoint) {
+  const actions = [];
+  if (startPoint) {
+    actions.push(
+      `<a class="button secondary" href="${escapeHtml(startPoint.mapUrl)}" target="_blank" rel="noopener noreferrer">Open Start in OSM</a>`,
+    );
+  }
+  if (endPoint) {
+    actions.push(
+      `<a class="button secondary" href="${escapeHtml(endPoint.mapUrl)}" target="_blank" rel="noopener noreferrer">Open End in OSM</a>`,
+    );
+  }
+  if (actions.length === 0) {
+    return "";
+  }
+  return `<div class="trip-detail-actions">${actions.join("")}</div>`;
+}
+
+function dateAtStartOfDay(value) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(`${value}T00:00:00`);
+  const timestamp = date.getTime();
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+  return timestamp;
+}
+
+function dateAtEndOfDay(value) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(`${value}T23:59:59.999`);
+  const timestamp = date.getTime();
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+  return timestamp;
 }
 
 async function apiRequest(path, options = {}) {
@@ -173,6 +668,62 @@ function getSelectedVehicle() {
   return state.vehicles.find((vehicle) => vehicle.vin === state.selectedVin) || null;
 }
 
+function renderOverviewPosition(position) {
+  if (!refs.overviewPositionMap || !refs.overviewPositionEmpty) {
+    return;
+  }
+
+  if (!window.L) {
+    refs.overviewPositionMap.classList.add("hidden");
+    refs.overviewPositionEmpty.classList.remove("hidden");
+    refs.overviewPositionEmpty.textContent = "Map is unavailable.";
+    return;
+  }
+
+  const latitude = toFiniteNumber(position && position.latitude);
+  const longitude = toFiniteNumber(position && position.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    refs.overviewPositionMap.classList.add("hidden");
+    refs.overviewPositionEmpty.classList.remove("hidden");
+    refs.overviewPositionEmpty.textContent = "No position available";
+    return;
+  }
+
+  refs.overviewPositionMap.classList.remove("hidden");
+  refs.overviewPositionEmpty.classList.add("hidden");
+
+  if (!state.overviewMap) {
+    state.overviewMap = window.L.map(refs.overviewPositionMap, {
+      zoomControl: true,
+      attributionControl: true,
+    });
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(state.overviewMap);
+  }
+
+  const currentLatLng = [latitude, longitude];
+  if (!state.overviewMapMarker) {
+    state.overviewMapMarker = window.L.circleMarker(currentLatLng, {
+      radius: 8,
+      color: "#7f1d1d",
+      weight: 2,
+      fillColor: "#ef4444",
+      fillOpacity: 0.95,
+    }).bindTooltip("Vehicle").addTo(state.overviewMap);
+  } else {
+    state.overviewMapMarker.setLatLng(currentLatLng);
+  }
+
+  state.overviewMap.setView(currentLatLng, 14);
+  window.setTimeout(() => {
+    if (state.overviewMap) {
+      state.overviewMap.invalidateSize();
+    }
+  }, 80);
+}
+
 function setVehicleIdentity(vehicle) {
   if (!vehicle) {
     refs.vehicleName.textContent = "-";
@@ -181,6 +732,7 @@ function setVehicleIdentity(vehicle) {
     refs.vehiclePhoto.classList.add("hidden");
     refs.vehiclePhotoFallback.classList.remove("hidden");
     refs.vehiclePhoto.src = "";
+    renderOverviewPosition(null);
     return;
   }
 
@@ -239,6 +791,9 @@ function setElectricUi(isElectric) {
   }
   if (refs.tripsFuelHeader) {
     refs.tripsFuelHeader.textContent = "Fuel L/100km";
+  }
+  if (refs.tripStatConsumptionLabel) {
+    refs.tripStatConsumptionLabel.textContent = state.isElectricVehicle ? "Avg EV Consumption" : "Avg Fuel Consumption";
   }
 }
 
@@ -383,32 +938,97 @@ function populateVehicles(vehicles) {
   }
 }
 
+function signalBoolean(value) {
+  if (value === true) {
+    return "Yes";
+  }
+  if (value === false) {
+    return "No";
+  }
+  return "-";
+}
+
+function renderLiveSignals(signals) {
+  if (!refs.liveSignals) {
+    return;
+  }
+  const safeSignals = signals && typeof signals === "object" ? signals : {};
+  const lockState = Array.isArray(safeSignals.lock_state) && safeSignals.lock_state.length > 0
+    ? safeSignals.lock_state.join(", ")
+    : "-";
+  const openDoors = Array.isArray(safeSignals.open_doors) && safeSignals.open_doors.length > 0
+    ? safeSignals.open_doors.join(", ")
+    : "-";
+
+  const rows = [
+    { label: "Ignition", value: safeSignals.ignition || "-" },
+    { label: "Moving", value: signalBoolean(safeSignals.moving) },
+    { label: "Speed", value: fmtNumber(safeSignals.speed, 1, " km/h") },
+    { label: "Outside Temp", value: fmtNumber(safeSignals.outside_temperature, 1, " C") },
+    { label: "Privacy", value: safeSignals.privacy_mode || "-" },
+    { label: "Lock State", value: lockState },
+    { label: "Open Doors", value: `${Number(safeSignals.open_doors_count) || 0} (${openDoors})` },
+    { label: "Doors Updated", value: fmtDate(safeSignals.doors_updated_at) },
+  ];
+
+  refs.liveSignals.innerHTML = rows
+    .map(
+      (row) => `
+        <div class="signal-item">
+          <span>${escapeHtml(row.label)}</span>
+          <strong>${escapeHtml(row.value)}</strong>
+        </div>
+      `,
+    )
+    .join("");
+}
+
 function renderOverview(data) {
   const status = data.status || {};
   const battery = status.battery || {};
+  const fuel = status.fuel || {};
   const position = status.position || null;
+  const remainingKm = status.remaining_km || {};
 
   document.getElementById("metric-battery").textContent = fmtNumber(battery.level, 0, "%");
   document.getElementById("metric-charge-status").textContent = battery.charging_status || "-";
-  document.getElementById("metric-range").textContent = fmtNumber(battery.autonomy, 0, " km");
+  const electricRange = toFiniteNumber(remainingKm.electric ?? battery.autonomy);
+  const fuelRange = toFiniteNumber(remainingKm.fuel ?? fuel.autonomy);
+  const totalRange = toFiniteNumber(remainingKm.total);
+
+  let resolvedTotalRange = totalRange;
+  if (!Number.isFinite(resolvedTotalRange)) {
+    if (Number.isFinite(electricRange) || Number.isFinite(fuelRange)) {
+      resolvedTotalRange = (Number.isFinite(electricRange) ? electricRange : 0) + (Number.isFinite(fuelRange) ? fuelRange : 0);
+    } else {
+      resolvedTotalRange = null;
+    }
+  }
+
+  document.getElementById("metric-range").textContent = fmtNumber(resolvedTotalRange, 0, " km");
+  const rangeDetail = document.getElementById("metric-range-detail");
+  if (rangeDetail) {
+    const hasElectric = Number.isFinite(electricRange);
+    const hasFuel = Number.isFinite(fuelRange);
+    if (hasElectric && hasFuel) {
+      rangeDetail.textContent = `Electric ${fmtNumber(electricRange, 0, " km")} + Fuel ${fmtNumber(fuelRange, 0, " km")}`;
+    } else if (hasElectric) {
+      rangeDetail.textContent = `Electric range ${fmtNumber(electricRange, 0, " km")}`;
+    } else if (hasFuel) {
+      rangeDetail.textContent = `Fuel range ${fmtNumber(fuelRange, 0, " km")}`;
+    } else {
+      rangeDetail.textContent = "No range data available";
+    }
+  }
   document.getElementById("metric-mileage").textContent = fmtNumber(status.mileage, 1, " km");
   document.getElementById("metric-soh").textContent = fmtNumber(data.soh, 1, "%");
   document.getElementById("metric-updated").textContent = fmtDate(status.updated_at);
-
-  const positionLabel = document.getElementById("metric-position");
-  if (position) {
-    positionLabel.textContent = `${fmtNumber(position.latitude, 5)}, ${fmtNumber(position.longitude, 5)}`;
-    refs.positionLink.href = position.google_maps_url;
-    refs.positionLink.classList.remove("hidden");
-  } else {
-    positionLabel.textContent = "No position available";
-    refs.positionLink.classList.add("hidden");
-  }
+  renderOverviewPosition(position);
 
   const trips = data.trips || [];
   const chargings = data.chargings || [];
   const avgConsumption = average(trips.map((trip) => Number(trip.consumption_km)));
-  const avgFuelConsumption = average(trips.map((trip) => Number(trip.consumption_fuel_km)));
+  const avgFuelConsumption = fuelConsumptionPer100Km(trips);
   const avgCo2 = average(chargings.map((charging) => Number(charging.co2)));
   const avgChargeSpeed = average(
     chargings.map((charging) => {
@@ -427,30 +1047,245 @@ function renderOverview(data) {
   document.getElementById("summary-charge-speed").textContent = fmtNumber(avgChargeSpeed, 1, " kW");
   document.getElementById("summary-co2").textContent = fmtNumber(avgCo2, 1, " g/kWh");
   document.getElementById("summary-sessions").textContent = String(chargings.length);
+  renderLiveSignals(status.signals || {});
+}
+
+function readTripFilters() {
+  return {
+    fromDate: refs.tripFilterFrom ? refs.tripFilterFrom.value : "",
+    toDate: refs.tripFilterTo ? refs.tripFilterTo.value : "",
+    minDistance: toFiniteNumber(refs.tripFilterMinDistance ? refs.tripFilterMinDistance.value : null),
+    maxDistance: toFiniteNumber(refs.tripFilterMaxDistance ? refs.tripFilterMaxDistance.value : null),
+    sortBy: refs.tripFilterSort ? refs.tripFilterSort.value : "date_desc",
+  };
+}
+
+function sortTrips(trips, sortBy) {
+  const sorted = [...trips];
+  const numeric = (trip, key) => {
+    const numberValue = Number(trip[key]);
+    return Number.isFinite(numberValue) ? numberValue : Number.NEGATIVE_INFINITY;
+  };
+
+  switch (sortBy) {
+    case "distance_desc":
+      sorted.sort((left, right) => numeric(right, "distance") - numeric(left, "distance"));
+      break;
+    case "duration_desc":
+      sorted.sort((left, right) => numeric(right, "duration") - numeric(left, "duration"));
+      break;
+    case "speed_desc":
+      sorted.sort((left, right) => numeric(right, "speed_average") - numeric(left, "speed_average"));
+      break;
+    case "efficiency_electric":
+      sorted.sort((left, right) => {
+        const leftValue = Number(left.consumption_km);
+        const rightValue = Number(right.consumption_km);
+        if (!Number.isFinite(leftValue) && !Number.isFinite(rightValue)) {
+          return tripTimestamp(right) - tripTimestamp(left);
+        }
+        if (!Number.isFinite(leftValue)) {
+          return 1;
+        }
+        if (!Number.isFinite(rightValue)) {
+          return -1;
+        }
+        return leftValue - rightValue;
+      });
+      break;
+    case "efficiency_fuel":
+      sorted.sort((left, right) => {
+        const leftValue = Number(left.consumption_fuel_km);
+        const rightValue = Number(right.consumption_fuel_km);
+        if (!Number.isFinite(leftValue) && !Number.isFinite(rightValue)) {
+          return tripTimestamp(right) - tripTimestamp(left);
+        }
+        if (!Number.isFinite(leftValue)) {
+          return 1;
+        }
+        if (!Number.isFinite(rightValue)) {
+          return -1;
+        }
+        return leftValue - rightValue;
+      });
+      break;
+    case "date_desc":
+    default:
+      sorted.sort((left, right) => tripTimestamp(right) - tripTimestamp(left));
+  }
+
+  return sorted;
+}
+
+function filterTrips(trips) {
+  const filters = readTripFilters();
+  const fromTimestamp = dateAtStartOfDay(filters.fromDate);
+  const toTimestamp = dateAtEndOfDay(filters.toDate);
+
+  const filtered = trips.filter((trip) => {
+    const tripTime = tripTimestamp(trip);
+    if (fromTimestamp !== null && tripTime < fromTimestamp) {
+      return false;
+    }
+    if (toTimestamp !== null && tripTime > toTimestamp) {
+      return false;
+    }
+
+    const distance = Number(trip.distance);
+    if (Number.isFinite(filters.minDistance) && filters.minDistance > 0 && (!Number.isFinite(distance) || distance < filters.minDistance)) {
+      return false;
+    }
+    if (Number.isFinite(filters.maxDistance) && filters.maxDistance >= 0 && (!Number.isFinite(distance) || distance > filters.maxDistance)) {
+      return false;
+    }
+    return true;
+  });
+
+  return sortTrips(filtered, filters.sortBy);
+}
+
+function renderTripStatistics(trips) {
+  const count = trips.length;
+  const totalDistance = trips.reduce((sum, trip) => sum + (Number.isFinite(Number(trip.distance)) ? Number(trip.distance) : 0), 0);
+  const totalDurationMinutes = trips.reduce((sum, trip) => sum + (Number.isFinite(Number(trip.duration)) ? Number(trip.duration) : 0), 0);
+
+  const weightedSpeed = totalDurationMinutes > 0 ? totalDistance / (totalDurationMinutes / 60) : null;
+  const longestTrip = trips.reduce((max, trip) => {
+    const distance = Number(trip.distance);
+    if (!Number.isFinite(distance)) {
+      return max;
+    }
+    return Math.max(max, distance);
+  }, 0);
+
+  const avgElectricConsumption = average(trips.map((trip) => Number(trip.consumption_km)));
+  const avgFuelConsumption = fuelConsumptionPer100Km(trips);
+  const averageConsumption = state.isElectricVehicle ? avgElectricConsumption : avgFuelConsumption;
+  const consumptionSuffix = state.isElectricVehicle ? " kWh/100km" : " L/100km";
+
+  if (refs.tripStatCount) {
+    refs.tripStatCount.textContent = String(count);
+  }
+  if (refs.tripStatDistance) {
+    refs.tripStatDistance.textContent = fmtNumber(totalDistance, 1, " km");
+  }
+  if (refs.tripStatDuration) {
+    refs.tripStatDuration.textContent = fmtNumber(totalDurationMinutes / 60, 1, " h");
+  }
+  if (refs.tripStatSpeed) {
+    refs.tripStatSpeed.textContent = fmtNumber(weightedSpeed, 1, " km/h");
+  }
+  if (refs.tripStatLongest) {
+    refs.tripStatLongest.textContent = fmtNumber(longestTrip, 1, " km");
+  }
+  if (refs.tripStatConsumption) {
+    refs.tripStatConsumption.textContent = fmtNumber(averageConsumption, 2, consumptionSuffix);
+  }
 }
 
 function renderTrips(trips) {
-  const sorted = [...trips].sort((left, right) => new Date(right.start_at) - new Date(left.start_at));
-  if (sorted.length === 0) {
-    const colCount = state.isElectricVehicle ? 6 : 5;
+  const sourceTrips = Array.isArray(trips) ? trips : [];
+  const filteredTrips = filterTrips(sourceTrips);
+  state.tripsFiltered = filteredTrips;
+  renderTripStatistics(filteredTrips);
+  destroyTripMaps();
+
+  if (refs.tripFilterSummary) {
+    refs.tripFilterSummary.textContent = `Showing ${filteredTrips.length} of ${sourceTrips.length} trips.`;
+  }
+
+  if (filteredTrips.length === 0) {
+    const colCount = tripColumnCount();
     refs.tripsBody.innerHTML =
-      `<tr><td colspan="${colCount}">No trip data yet (drive with refresh enabled, or wait for cloud history).</td></tr>`;
+      `<tr><td colspan="${colCount}">No trips match current filters. Adjust filters or wait for more vehicle data.</td></tr>`;
     return;
   }
 
-  refs.tripsBody.innerHTML = sorted
-    .map(
-      (trip) => `
-        <tr>
-          <td>${escapeHtml(fmtDate(trip.start_at))}</td>
+  const colCount = tripColumnCount();
+  refs.tripsBody.innerHTML = filteredTrips
+    .map((trip, tripIndex) => {
+      const startPoint = getTripStartPoint(trip);
+      const endPoint = getTripEndPoint(trip);
+      const startCoords = startPoint ? tripPointCoordinateLabel(startPoint) : "-";
+      const endCoords = endPoint ? tripPointCoordinateLabel(endPoint) : "-";
+      const canRenderMap = Boolean(startPoint || endPoint || trip.id);
+      const fuelUsedLiters = getTripFuelConsumedLiters(trip);
+      const secondaryConsumptionCard = state.isElectricVehicle
+        ? `
+                <div class="trip-detail-item">
+                  <span>Fuel Consumption</span>
+                  <strong>${escapeHtml(fmtNumber(trip.consumption_fuel_km, 2, " L/100km"))}</strong>
+                </div>
+          `
+        : `
+                <div class="trip-detail-item">
+                  <span>Fuel Used</span>
+                  <strong>${escapeHtml(fmtNumber(fuelUsedLiters, 2, " L"))}</strong>
+                </div>
+          `;
+      const detailMapBlock = canRenderMap
+        ? `
+          <div class="trip-map-legend">
+            <span><span class="trip-marker-dot route"></span>Path</span>
+            <span><span class="trip-marker-dot start"></span>Start</span>
+            <span><span class="trip-marker-dot end"></span>End</span>
+          </div>
+          <div id="${tripMapContainerId(tripIndex)}" class="trip-map"></div>
+        `
+        : '<p class="trip-map-empty">No map coordinates available for this trip.</p>';
+
+      return `
+        <tr class="trip-summary-row" data-trip-index="${tripIndex}" aria-expanded="false">
+          <td>
+            <span class="trip-summary-main">
+              <span class="trip-expand-icon" aria-hidden="true">></span>
+              <span>${escapeHtml(fmtDate(trip.start_at))}</span>
+            </span>
+          </td>
           <td>${escapeHtml(fmtNumber(trip.distance, 1, " km"))}</td>
           <td>${escapeHtml(fmtNumber(trip.duration, 0, " min"))}</td>
           <td>${escapeHtml(fmtNumber(trip.speed_average, 1, " km/h"))}</td>
           ${state.isElectricVehicle ? `<td>${escapeHtml(fmtNumber(trip.consumption_km, 2))}</td>` : ""}
           <td>${escapeHtml(fmtNumber(trip.consumption_fuel_km, 2))}</td>
-        </tr>`,
-    )
+          <td>${escapeHtml(fmtNumber(fuelUsedLiters, 2, " L"))}</td>
+        </tr>
+        <tr class="trip-detail-row hidden" data-trip-index="${tripIndex}">
+          <td colspan="${colCount}">
+            <div class="trip-detail-panel">
+              <div class="trip-detail-meta">
+                <div class="trip-detail-item">
+                  <span>Ended</span>
+                  <strong>${escapeHtml(fmtDate(trip.end_at))}</strong>
+                </div>
+                <div class="trip-detail-item">
+                  <span>Start Coordinates</span>
+                  <strong>${escapeHtml(startCoords)}</strong>
+                </div>
+                <div class="trip-detail-item">
+                  <span>End Coordinates</span>
+                  <strong>${escapeHtml(endCoords)}</strong>
+                </div>
+                <div class="trip-detail-item">
+                  <span>Max Speed</span>
+                  <strong>${escapeHtml(fmtNumber(trip.max_speed, 1, " km/h"))}</strong>
+                </div>
+                <div class="trip-detail-item">
+                  <span>${state.isElectricVehicle ? "EV Consumption" : "Fuel Consumption"}</span>
+                  <strong>${escapeHtml(
+                    state.isElectricVehicle ? fmtNumber(trip.consumption_km, 2, " kWh/100km") : fmtNumber(trip.consumption_fuel_km, 2, " L/100km"),
+                  )}</strong>
+                </div>
+                ${secondaryConsumptionCard}
+              </div>
+              ${tripDetailActions(startPoint, endPoint)}
+              ${detailMapBlock}
+            </div>
+          </td>
+        </tr>`;
+    })
     .join("");
+
+  wireTripRows(filteredTrips);
 }
 
 function renderChargings(chargings) {
@@ -572,8 +1407,9 @@ async function refreshDashboard() {
   setElectricUi(supportsElectric);
   setVehicleIdentity(selectedVehicle || dashboard);
 
+  state.tripsRaw = dashboard.trips || [];
   renderOverview(dashboard);
-  renderTrips(dashboard.trips || []);
+  renderTrips(state.tripsRaw);
   renderChargings(dashboard.chargings || []);
   renderControl(dashboard);
   renderSettings(dashboard.settings);
@@ -604,8 +1440,10 @@ async function loadAll() {
       renderRemoteAuthError(null);
       state.vehicles = [];
       state.selectedVin = null;
+      state.tripsRaw = [];
       populateVehicles([]);
       setVehicleIdentity(null);
+      renderTrips([]);
       activateTab("setup");
       return;
     }
@@ -623,6 +1461,8 @@ async function loadAll() {
     if (state.vehicles.length === 0) {
       showToast("No vehicles configured yet. Use the Setup tab.", "bad");
       setVehicleIdentity(null);
+      state.tripsRaw = [];
+      renderTrips([]);
       activateTab("setup");
       return;
     }
@@ -630,8 +1470,10 @@ async function loadAll() {
     await refreshDashboard();
   } catch (error) {
     state.isAuthenticated = false;
+    state.tripsRaw = [];
     setAuthUiState(false, null);
     setVehicleIdentity(null);
+    renderTrips([]);
     setConnectionState(error.message, false);
     showToast(error.message, "bad");
   }
@@ -778,6 +1620,48 @@ function wireSettingsForm() {
   });
 }
 
+function wireTripFilters() {
+  if (!refs.tripFiltersForm) {
+    return;
+  }
+
+  const applyFilters = () => {
+    renderTrips(state.tripsRaw || []);
+  };
+
+  refs.tripFiltersForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    applyFilters();
+  });
+
+  if (refs.tripFiltersReset) {
+    refs.tripFiltersReset.addEventListener("click", () => {
+      if (refs.tripFilterFrom) {
+        refs.tripFilterFrom.value = "";
+      }
+      if (refs.tripFilterTo) {
+        refs.tripFilterTo.value = "";
+      }
+      if (refs.tripFilterMinDistance) {
+        refs.tripFilterMinDistance.value = "";
+      }
+      if (refs.tripFilterMaxDistance) {
+        refs.tripFilterMaxDistance.value = "";
+      }
+      if (refs.tripFilterSort) {
+        refs.tripFilterSort.value = "date_desc";
+      }
+      applyFilters();
+    });
+  }
+
+  [refs.tripFilterFrom, refs.tripFilterTo, refs.tripFilterMinDistance, refs.tripFilterMaxDistance, refs.tripFilterSort]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener("change", applyFilters);
+    });
+}
+
 function wireSetupForms() {
   document.getElementById("setup-login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -834,11 +1718,28 @@ function wireSetupForms() {
 
   const params = new URLSearchParams(window.location.search);
   const legacyOAuthUrl = params.get("url");
+  const oauthCallbackState = params.get("oauth");
   if (legacyOAuthUrl) {
     refs.oauthUrl.href = legacyOAuthUrl;
     refs.oauthUrl.classList.remove("hidden");
     refs.oauthMessage.textContent = "OAuth URL detected from query parameters.";
     activateTab("setup");
+  }
+  if (oauthCallbackState === "done") {
+    refs.oauthMessage.textContent = "OAuth callback received. Finalizing login...";
+    showToast("OAuth callback received. Refreshing setup status...", "ok");
+    activateTab("setup");
+    window.setTimeout(() => {
+      loadAll().catch((error) => showToast(error.message, "bad"));
+    }, 1200);
+    params.delete("oauth");
+    window.history.replaceState({}, "", `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`);
+  } else if (oauthCallbackState === "error") {
+    refs.oauthMessage.textContent = "OAuth callback returned an error. Check backend logs and retry setup.";
+    showToast("OAuth callback failed. Check setup logs.", "bad");
+    activateTab("setup");
+    params.delete("oauth");
+    window.history.replaceState({}, "", `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 }
 
@@ -894,7 +1795,39 @@ async function registerServiceWorker() {
     return;
   }
   try {
-    await navigator.serviceWorker.register("service-worker.js");
+    const registration = await navigator.serviceWorker.register("service-worker.js");
+
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+
+    registration.addEventListener("updatefound", () => {
+      const installing = registration.installing;
+      if (!installing) {
+        return;
+      }
+
+      installing.addEventListener("statechange", () => {
+        if (installing.state === "installed" && navigator.serviceWorker.controller) {
+          showToast("Updating app...", "ok");
+          installing.postMessage({ type: "SKIP_WAITING" });
+        }
+      });
+    });
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (registerServiceWorker.reloading) {
+        return;
+      }
+      registerServiceWorker.reloading = true;
+      window.location.reload();
+    });
+
+    if (registration.update) {
+      window.setTimeout(() => {
+        registration.update().catch(() => {});
+      }, 3000);
+    }
   } catch (error) {
     console.error("Service worker registration failed", error);
   }
@@ -920,6 +1853,7 @@ async function bootstrap() {
   wireGlobalActions();
   wireControlActions();
   wireSettingsForm();
+  wireTripFilters();
   wireSetupForms();
   wireInstallPrompt();
   refs.vehiclePhoto.addEventListener("error", () => {

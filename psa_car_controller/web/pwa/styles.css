@@ -304,6 +304,12 @@ button {
   font-weight: 700;
 }
 
+.metric-subline {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+
 .two-col {
   margin-top: 0.85rem;
   display: grid;
@@ -325,6 +331,40 @@ button {
 .summary-grid dd {
   margin: 0;
   font-weight: 600;
+}
+
+.overview-map {
+  width: 100%;
+  height: 270px;
+  border-radius: 12px;
+  border: 1px solid rgba(189, 205, 224, 0.24);
+  overflow: hidden;
+}
+
+.signals-grid {
+  margin-top: 0.2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.signal-item {
+  border: 1px solid rgba(189, 205, 224, 0.2);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  background: rgba(7, 20, 34, 0.58);
+}
+
+.signal-item span {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.74rem;
+}
+
+.signal-item strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.92rem;
 }
 
 .button-grid {
@@ -352,6 +392,161 @@ button {
   align-items: center;
 }
 
+.trip-filters {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: auto minmax(110px, 190px) auto minmax(110px, 190px) auto minmax(170px, 260px);
+  gap: 0.45rem 0.7rem;
+  align-items: center;
+}
+
+.trip-filters-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.trip-filter-summary {
+  margin: 0.65rem 0 0;
+}
+
+.trip-stats-grid .metric {
+  font-size: 1.25rem;
+}
+
+.trip-summary-row {
+  cursor: pointer;
+  user-select: none;
+  transition: background 140ms ease;
+}
+
+.trip-summary-row:hover {
+  background: rgba(26, 58, 90, 0.5);
+}
+
+.trip-summary-row.is-open {
+  background: rgba(18, 47, 76, 0.72) !important;
+}
+
+.trip-summary-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.trip-expand-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 6px;
+  background: rgba(189, 205, 224, 0.18);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-family: "IBM Plex Mono", monospace;
+  line-height: 1;
+}
+
+.trip-summary-row.is-open .trip-expand-icon {
+  color: var(--accent);
+  background: rgba(247, 179, 43, 0.16);
+}
+
+.trip-detail-row {
+  background: rgba(4, 15, 27, 0.75);
+}
+
+.trip-detail-row td {
+  padding: 0;
+}
+
+.trip-detail-panel {
+  padding: 0.75rem 0.85rem 0.95rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.trip-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.5rem 0.75rem;
+}
+
+.trip-detail-item {
+  border: 1px solid rgba(189, 205, 224, 0.18);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  background: rgba(7, 20, 34, 0.65);
+  min-height: 56px;
+}
+
+.trip-detail-item span {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.75rem;
+}
+
+.trip-detail-item strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+}
+
+.trip-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.trip-detail-actions .button {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.trip-map-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.trip-marker-dot {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  margin-right: 0.25rem;
+}
+
+.trip-marker-dot.start {
+  background: #22c55e;
+}
+
+.trip-marker-dot.end {
+  background: #ef4444;
+}
+
+.trip-marker-dot.route {
+  background: #60a5fa;
+}
+
+.trip-map {
+  width: 100%;
+  height: 250px;
+  border-radius: 12px;
+  border: 1px solid rgba(189, 205, 224, 0.24);
+  overflow: hidden;
+}
+
+.trip-map-empty {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 .checkbox-wrap {
   display: flex;
   align-items: center;
@@ -373,7 +568,7 @@ hr {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 680px;
+  min-width: 900px;
 }
 
 th,
@@ -469,6 +664,26 @@ code {
 
   .inline-group {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .trip-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-filters-actions {
+    justify-content: stretch;
+  }
+
+  .trip-filters-actions .button {
+    flex: 1;
+  }
+
+  .trip-detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-map {
+    height: 220px;
   }
 }
 

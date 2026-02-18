@@ -1,12 +1,13 @@
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, urlparse, urlsplit, urljoin, urlencode, parse_qsl, urlunsplit
+from urllib.parse import parse_qs, unquote, urlparse, urlsplit, urljoin, urlencode, parse_qsl, urlunsplit
 
 import requests
 from flask import Response as FlaskResponse
-from flask import jsonify, request, send_from_directory
+from flask import jsonify, redirect, request, send_from_directory
 from pydantic import BaseModel
 
 from psa_car_controller.common.utils import RateLimitException, parse_hour
@@ -25,6 +26,7 @@ STYLE_CACHE = None
 APP = PSACarController()
 INITIAL_SETUP: Optional[Any] = None
 PWA_DIR = Path(__file__).resolve().parents[1] / "pwa"
+REVERSE_GEOCODE_CACHE: Dict[str, Dict[str, Any]] = {}
 BRAND_LOGO_FILES = {
     "peugeot": "brands/peugeot.svg",
     "citroen": "brands/citroen.svg",
@@ -38,6 +40,10 @@ BRAND_LOGO_FILES = {
 }
 
 
+def _openstreetmap_url(latitude: Any, longitude: Any, zoom: int = 16) -> str:
+    return f"https://www.openstreetmap.org/?mlat={latitude}&mlon={longitude}#map={zoom}/{latitude}/{longitude}"
+
+
 def _bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -46,6 +52,16 @@ def _bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
     return bool(value)
+
+
+def _to_non_negative_number(value: Any) -> Optional[float]:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number < 0:
+        return None
+    return number
 
 
 def _json_response(payload: Any, status=200):
@@ -138,6 +154,180 @@ def _iso(value):
     return value.isoformat() if value is not None else None
 
 
+def _field_value(source: Any, *names: str):
+    if source is None:
+        return None
+    for name in names:
+        if isinstance(source, dict):
+            value = source.get(name)
+        else:
+            value = getattr(source, name, None)
+        if value is not None:
+            return value
+    return None
+
+
+def _to_float(value: Any) -> Optional[float]:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _trip_point_payload(latitude: Any, longitude: Any, altitude: Any = None):
+    lat = _to_float(latitude)
+    lon = _to_float(longitude)
+    if lat is None or lon is None:
+        return None
+    alt = _to_float(altitude)
+    return {
+        "latitude": lat,
+        "longitude": lon,
+        "altitude": alt,
+        "google_maps_url": f"https://maps.google.com/maps?q={lat},{lon}",
+        "openstreetmap_url": _openstreetmap_url(lat, lon),
+    }
+
+
+def _trip_point_from_value(value: Any):
+    if value is None:
+        return None
+
+    if isinstance(value, dict):
+        geometry = value.get("geometry")
+        if isinstance(geometry, dict):
+            coordinates = geometry.get("coordinates")
+            if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+                return _trip_point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+        coordinates = value.get("coordinates")
+        if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+            return _trip_point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+        latitude = value.get("latitude", value.get("lat"))
+        longitude = value.get("longitude", value.get("lng", value.get("lon")))
+        altitude = value.get("altitude", value.get("alt"))
+        return _trip_point_payload(latitude, longitude, altitude)
+
+    geometry = getattr(value, "geometry", None)
+    if geometry is not None:
+        coordinates = getattr(geometry, "coordinates", None)
+        if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+            return _trip_point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+    coordinates = getattr(value, "coordinates", None)
+    if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+        return _trip_point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+    latitude = getattr(value, "latitude", getattr(value, "lat", None))
+    longitude = getattr(value, "longitude", getattr(value, "lng", getattr(value, "lon", None)))
+    altitude = getattr(value, "altitude", getattr(value, "alt", None))
+    return _trip_point_payload(latitude, longitude, altitude)
+
+
+def _trip_positions_from_value(value: Any) -> List[dict]:
+    items = None
+    if isinstance(value, dict):
+        embedded = value.get("_embedded") or value.get("embedded")
+        if isinstance(embedded, dict):
+            items = embedded.get("positions")
+        if items is None:
+            items = value.get("positions")
+    elif isinstance(value, list):
+        items = value
+    else:
+        embedded = getattr(value, "_embedded", getattr(value, "embedded", None))
+        if isinstance(embedded, dict):
+            items = embedded.get("positions")
+        elif embedded is not None:
+            embedded_positions = getattr(embedded, "positions", None)
+            if isinstance(embedded_positions, list):
+                items = embedded_positions
+        if items is None:
+            positions = getattr(value, "positions", None)
+            if isinstance(positions, list):
+                items = positions
+
+    if not isinstance(items, list):
+        return []
+
+    points = []
+    for item in items:
+        point = _trip_point_from_value(item)
+        if point:
+            points.append(point)
+    return points
+
+
+def _next_page_token_from_payload(payload: Any):
+    if not isinstance(payload, dict):
+        return None
+    links = payload.get("_links") or payload.get("links")
+    if not isinstance(links, dict):
+        return None
+    next_link = links.get("next")
+    if isinstance(next_link, dict):
+        href = next_link.get("href")
+    elif isinstance(next_link, str):
+        href = next_link
+    else:
+        href = None
+    if not isinstance(href, str):
+        return None
+    try:
+        parsed = urlparse(href)
+        return parse_qs(parsed.query).get("pageToken", [None])[0]
+    except ValueError:
+        return None
+
+
+def _positions_from_points(points: List[dict]) -> Dict[str, List[float]]:
+    latitudes = []
+    longitudes = []
+    for point in points:
+        lat = _to_float(_field_value(point, "latitude", "lat"))
+        lon = _to_float(_field_value(point, "longitude", "lng", "lon"))
+        if lat is None or lon is None:
+            continue
+        latitudes.append(lat)
+        longitudes.append(lon)
+    return {"lat": latitudes, "long": longitudes}
+
+
+def _trip_waypoints_for_vehicle(car, trip_id: str) -> List[dict]:
+    points = []
+    seen_tokens = set()
+    page_token = None
+    for _ in range(0, 20):
+        query_params = []
+        if page_token:
+            if page_token in seen_tokens:
+                break
+            seen_tokens.add(page_token)
+            query_params.append(("pageToken", page_token))
+
+        payload = APP.myp.api().api_client.call_api(
+            "/user/vehicles/{id}/trips/{tid}/wayPoints",
+            "GET",
+            path_params={"id": car.vehicle_id, "tid": trip_id},
+            query_params=query_params,
+            response_type="object",
+            auth_settings=["Vehicle_auth", "client_id", "realm"],
+            _return_http_data_only=True,
+        )
+        page_points = _trip_positions_from_value(payload)
+        for point in page_points:
+            if not points:
+                points.append(point)
+                continue
+            if points[-1]["latitude"] != point["latitude"] or points[-1]["longitude"] != point["longitude"]:
+                points.append(point)
+        page_token = _next_page_token_from_payload(payload)
+        if not page_token:
+            break
+    return points
+
+
 def _coordinates(status):
     coordinates = getattr(getattr(getattr(status, "last_position", None), "geometry", None), "coordinates", None)
     if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
@@ -149,6 +339,7 @@ def _coordinates(status):
             "longitude": longitude,
             "altitude": altitude,
             "google_maps_url": f"https://maps.google.com/maps?q={latitude},{longitude}",
+            "openstreetmap_url": _openstreetmap_url(latitude, longitude),
         }
     return None
 
@@ -160,11 +351,47 @@ def _status_payload(status) -> Dict[str, Any]:
     preconditioning = getattr(getattr(getattr(status, "preconditionning", None), "air_conditioning", None), "status", None)
     timed_odometer = getattr(status, "timed_odometer", None)
     kinetic = getattr(status, "kinetic", None)
+    doors_state = getattr(status, "doors_state", None)
+    environment = getattr(status, "environment", None)
+    ignition = getattr(status, "ignition", None)
+    privacy = getattr(status, "privacy", None)
+    electric_autonomy = _to_non_negative_number(getattr(electric, "autonomy", None))
+    fuel_autonomy = _to_non_negative_number(getattr(fuel, "autonomy", None))
+    locked_state = _field_value(doors_state, "locked_state", "lockedState")
+    if isinstance(locked_state, tuple):
+        locked_state = list(locked_state)
+    if not isinstance(locked_state, list):
+        locked_state = []
+
+    open_doors = []
+    door_opening_entries = _field_value(doors_state, "opening")
+    if isinstance(door_opening_entries, list):
+        for entry in door_opening_entries:
+            state_value = _field_value(entry, "state")
+            if isinstance(state_value, str) and state_value.lower() == "open":
+                identifier = _field_value(entry, "identifier") or "Unknown"
+                open_doors.append(str(identifier))
+
+    speed = _field_value(kinetic, "speed", "pace")
+    updated_at = _iso(getattr(electric, "updated_at", None))
+    if updated_at is None:
+        updated_at = _iso(getattr(fuel, "updated_at", None))
+    if updated_at is None:
+        updated_at = _iso(getattr(timed_odometer, "updated_at", None))
+
+    total_autonomy = None
+    if electric_autonomy is not None or fuel_autonomy is not None:
+        total_autonomy = (electric_autonomy or 0) + (fuel_autonomy or 0)
 
     return {
-        "updated_at": _iso(getattr(electric, "updated_at", None)),
+        "updated_at": updated_at,
         "mileage": getattr(timed_odometer, "mileage", None),
         "moving": getattr(kinetic, "moving", None),
+        "remaining_km": {
+            "total": total_autonomy,
+            "electric": electric_autonomy,
+            "fuel": fuel_autonomy,
+        },
         "battery": {
             "level": getattr(electric, "level", None),
             "autonomy": getattr(electric, "autonomy", None),
@@ -179,6 +406,17 @@ def _status_payload(status) -> Dict[str, Any]:
         },
         "preconditioning_status": preconditioning,
         "position": _coordinates(status),
+        "signals": {
+            "ignition": _field_value(ignition, "type"),
+            "moving": _field_value(kinetic, "moving"),
+            "speed": speed,
+            "outside_temperature": _field_value(_field_value(environment, "air"), "temp"),
+            "privacy_mode": _field_value(privacy, "state"),
+            "lock_state": locked_state,
+            "open_doors": open_doors,
+            "open_doors_count": len(open_doors),
+            "doors_updated_at": _iso(_field_value(doors_state, "updated_at", "updatedAt")),
+        },
     }
 
 
@@ -255,7 +493,7 @@ def _load_trips(vin: Optional[str] = None) -> List[dict]:
                 return 0
         return 0
 
-    def _normalize_consumption(value: Any, energy_type: str):
+    def _normalize_avg_consumption(value: Any, energy_type: str):
         try:
             number = float(value)
         except (TypeError, ValueError):
@@ -273,15 +511,215 @@ def _load_trips(vin: Optional[str] = None) -> List[dict]:
             return number
         return number
 
-    def _trip_consumption(avg_consumption: Optional[list], energy_type: str):
-        if not isinstance(avg_consumption, list):
+    def _normalize_total_consumption(value: Any, energy_type: str):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
             return None
-        for line in avg_consumption:
+
+        if energy_type.lower() == "fuel":
+            # Most payloads provide liters. Some legacy payloads expose cL.
+            if number > 200:
+                return number / 100
+            return number
+        if energy_type.lower() == "electric":
+            # Most payloads provide kWh. Some legacy payloads expose Wh.
+            if number > 500:
+                return number / 1000
+            return number
+        return number
+
+    def _trip_consumption_per_100(energy_consumptions: Optional[list], energy_type: str, distance_km: Optional[float]):
+        if not isinstance(energy_consumptions, list):
+            return None
+        for line in energy_consumptions:
             line_type = _field(line, "type")
             if isinstance(line_type, str) and line_type.lower() == energy_type.lower():
-                value = _field(line, "value", "avgConsumption", "consumption")
-                return _normalize_consumption(value, energy_type)
+                avg_value = _field(line, "avg_consumption", "avgConsumption", "value")
+                normalized_avg = _normalize_avg_consumption(avg_value, energy_type)
+                if normalized_avg is not None:
+                    return normalized_avg
+
+                total_value = _field(line, "total")
+                if total_value is None:
+                    total_value = _field(line, "consumption")
+                if isinstance(total_value, dict):
+                    total_value = _field(total_value, "consumption", "total", "value")
+                normalized_total = _normalize_total_consumption(total_value, energy_type)
+                if normalized_total is not None and isinstance(distance_km, (int, float)) and distance_km > 0:
+                    per_100 = 100 * normalized_total / float(distance_km)
+                    if energy_type.lower() == "fuel" and per_100 > 40:
+                        adjusted_total = normalized_total / 100
+                        adjusted_per_100 = 100 * adjusted_total / float(distance_km)
+                        if adjusted_per_100 <= 40:
+                            per_100 = adjusted_per_100
+                    if energy_type.lower() == "electric" and per_100 > 120:
+                        adjusted_total = normalized_total / 1000
+                        adjusted_per_100 = 100 * adjusted_total / float(distance_km)
+                        if adjusted_per_100 <= 120:
+                            per_100 = adjusted_per_100
+                    return per_100
         return None
+
+    def _trip_total_consumption(energy_consumptions: Optional[list], energy_type: str, distance_km: Optional[float]):
+        if not isinstance(energy_consumptions, list):
+            return None
+        for line in energy_consumptions:
+            line_type = _field(line, "type")
+            if isinstance(line_type, str) and line_type.lower() == energy_type.lower():
+                total_value = _field(line, "total")
+                if total_value is None:
+                    total_value = _field(line, "consumption")
+                if isinstance(total_value, dict):
+                    total_value = _field(total_value, "consumption", "total", "value")
+                normalized_total = _normalize_total_consumption(total_value, energy_type)
+                if normalized_total is not None:
+                    if isinstance(distance_km, (int, float)) and distance_km > 0:
+                        per_100 = 100 * normalized_total / float(distance_km)
+                        if energy_type.lower() == "fuel" and per_100 > 40:
+                            adjusted_total = normalized_total / 100
+                            adjusted_per_100 = 100 * adjusted_total / float(distance_km)
+                            if adjusted_per_100 <= 40:
+                                normalized_total = adjusted_total
+                        if energy_type.lower() == "electric" and per_100 > 120:
+                            adjusted_total = normalized_total / 1000
+                            adjusted_per_100 = 100 * adjusted_total / float(distance_km)
+                            if adjusted_per_100 <= 120:
+                                normalized_total = adjusted_total
+                    return normalized_total
+
+                avg_value = _field(line, "avg_consumption", "avgConsumption", "value")
+                normalized_avg = _normalize_avg_consumption(avg_value, energy_type)
+                if normalized_avg is not None and isinstance(distance_km, (int, float)) and distance_km > 0:
+                    return normalized_avg * float(distance_km) / 100
+        return None
+
+    def _to_float(value: Any):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        return number
+
+    def _point_payload(latitude: Any, longitude: Any, altitude: Any = None):
+        lat = _to_float(latitude)
+        lon = _to_float(longitude)
+        if lat is None or lon is None:
+            return None
+        alt = _to_float(altitude)
+        return {
+            "latitude": lat,
+            "longitude": lon,
+            "altitude": alt,
+            "google_maps_url": f"https://maps.google.com/maps?q={lat},{lon}",
+            "openstreetmap_url": _openstreetmap_url(lat, lon),
+        }
+
+    def _point_from_value(value: Any):
+        if value is None:
+            return None
+
+        if isinstance(value, dict):
+            geometry = value.get("geometry")
+            if isinstance(geometry, dict):
+                coordinates = geometry.get("coordinates")
+                if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+                    return _point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+            coordinates = value.get("coordinates")
+            if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+                return _point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+            latitude = value.get("latitude", value.get("lat"))
+            longitude = value.get("longitude", value.get("lng", value.get("lon")))
+            altitude = value.get("altitude", value.get("alt"))
+            point = _point_payload(latitude, longitude, altitude)
+            if point:
+                return point
+            return None
+
+        geometry = getattr(value, "geometry", None)
+        if geometry is not None:
+            coordinates = getattr(geometry, "coordinates", None)
+            if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+                return _point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+        coordinates = getattr(value, "coordinates", None)
+        if isinstance(coordinates, (list, tuple)) and len(coordinates) >= 2:
+            return _point_payload(coordinates[1], coordinates[0], coordinates[2] if len(coordinates) >= 3 else None)
+
+        latitude = getattr(value, "latitude", getattr(value, "lat", None))
+        longitude = getattr(value, "longitude", getattr(value, "lng", getattr(value, "lon", None)))
+        altitude = getattr(value, "altitude", getattr(value, "alt", None))
+        return _point_payload(latitude, longitude, altitude)
+
+    def _positions_from_value(value: Any):
+        items = None
+        if isinstance(value, dict):
+            embedded = value.get("_embedded") or value.get("embedded")
+            if isinstance(embedded, dict):
+                items = embedded.get("positions")
+            if items is None:
+                items = value.get("positions")
+        elif isinstance(value, list):
+            items = value
+        else:
+            embedded = getattr(value, "_embedded", getattr(value, "embedded", None))
+            if isinstance(embedded, dict):
+                items = embedded.get("positions")
+            elif embedded is not None:
+                embedded_positions = getattr(embedded, "positions", None)
+                if isinstance(embedded_positions, list):
+                    items = embedded_positions
+            if items is None:
+                positions = getattr(value, "positions", None)
+                if isinstance(positions, list):
+                    items = positions
+
+        if not isinstance(items, list):
+            return {"lat": [], "long": []}
+
+        latitudes = []
+        longitudes = []
+        for item in items:
+            point = _point_from_value(item)
+            if point:
+                latitudes.append(point["latitude"])
+                longitudes.append(point["longitude"])
+        return {"lat": latitudes, "long": longitudes}
+
+    def _enrich_trip_row(trip_row: dict):
+        if not isinstance(trip_row, dict):
+            return trip_row
+
+        positions = trip_row.get("positions") or {}
+        latitudes = positions.get("lat") if isinstance(positions, dict) else []
+        longitudes = positions.get("long") if isinstance(positions, dict) else []
+        if not isinstance(latitudes, list):
+            latitudes = []
+        if not isinstance(longitudes, list):
+            longitudes = []
+
+        start_position = _point_from_value(trip_row.get("start_position"))
+        end_position = _point_from_value(trip_row.get("end_position"))
+
+        if start_position is None and latitudes and longitudes:
+            start_position = _point_payload(latitudes[0], longitudes[0])
+        if end_position is None and latitudes and longitudes:
+            end_position = _point_payload(latitudes[-1], longitudes[-1])
+
+        if not latitudes and not longitudes:
+            if start_position and end_position:
+                latitudes = [start_position["latitude"], end_position["latitude"]]
+                longitudes = [start_position["longitude"], end_position["longitude"]]
+            elif start_position:
+                latitudes = [start_position["latitude"]]
+                longitudes = [start_position["longitude"]]
+
+        trip_row["positions"] = {"lat": latitudes, "long": longitudes}
+        trip_row["start_position"] = start_position
+        trip_row["end_position"] = end_position
+        return trip_row
 
     def _next_page_token(payload: Any):
         if not isinstance(payload, dict):
@@ -324,24 +762,53 @@ def _load_trips(vin: Optional[str] = None) -> List[dict]:
         if not isinstance(avg_consumption, list):
             avg_consumption = _field(trip, "energyConsumptions")
 
-        start_at = _field(trip, "started_at", "startedAt") or _field(trip, "created_at", "createdAt") \
-            or _field(trip, "stopped_at", "stoppedAt")
+        start_at = _field(trip, "started_at", "startedAt") or _field(trip, "created_at", "createdAt") or _field(
+            trip, "stopped_at", "stoppedAt")
+        end_at = _field(trip, "stopped_at", "stoppedAt")
+
+        start_position = _point_from_value(_field(trip, "start_position", "startPosition"))
+        end_position = _point_from_value(_field(trip, "stop_position", "stopPosition", "endPosition"))
+
+        positions = _positions_from_value(_field(trip, "positions", "waypoints", "wayPoints", "path"))
+        latitudes = positions.get("lat", [])
+        longitudes = positions.get("long", [])
+        if start_position is None and latitudes and longitudes:
+            start_position = _point_payload(latitudes[0], longitudes[0])
+        if end_position is None and latitudes and longitudes:
+            end_position = _point_payload(latitudes[-1], longitudes[-1])
+
+        consumption_km = _trip_consumption_per_100(avg_consumption, "Electric", distance)
+        consumption_fuel_km = _trip_consumption_per_100(avg_consumption, "Fuel", distance)
+        consumption_electric = _trip_total_consumption(avg_consumption, "Electric", distance)
+        consumption_fuel = _trip_total_consumption(avg_consumption, "Fuel", distance)
+
+        if consumption_km is None and consumption_electric is not None and distance > 0:
+            consumption_km = 100 * consumption_electric / distance
+        if consumption_fuel_km is None and consumption_fuel is not None and distance > 0:
+            consumption_fuel_km = 100 * consumption_fuel / distance
+
         row = {
             "id": _field(trip, "id"),
             "start_at": start_at,
+            "end_at": end_at,
             "duration": duration_min,
             "speed_average": speed_average,
+            "max_speed": _field(_field(trip, "kinetic"), "maxSpeed"),
             "distance": distance,
             "mileage": _field(trip, "odometer", "startMileage"),
-            "consumption": None,
-            "consumption_km": _trip_consumption(avg_consumption, "Electric"),
-            "consumption_fuel_km": _trip_consumption(avg_consumption, "Fuel"),
+            "consumption": consumption_electric,
+            "consumption_km": consumption_km,
+            "consumption_fuel": consumption_fuel,
+            "consumption_fuel_km": consumption_fuel_km,
             "consumption_by_temp": None,
-            "positions": {"lat": [], "long": []},
+            "positions": positions,
+            "start_position": start_position,
+            "end_position": end_position,
             "altitude_diff": None,
+            "done": _field(trip, "done"),
             "vin": default_vin,
         }
-        return row
+        return _enrich_trip_row(row)
 
     def _extract_embedded_trips(payload: Any) -> List[Any]:
         if payload is None:
@@ -360,6 +827,114 @@ def _load_trips(vin: Optional[str] = None) -> List[dict]:
         if isinstance(trips, list):
             return trips
         return []
+
+    def _is_missing_trip_value(value: Any) -> bool:
+        if value is None:
+            return True
+        if isinstance(value, str):
+            return value.strip() == ""
+        if isinstance(value, (list, dict)):
+            return len(value) == 0
+        return False
+
+    def _trip_merge_key(trip_row: dict):
+        if not isinstance(trip_row, dict):
+            return None
+
+        vin_key = str(trip_row.get("vin") or "")
+        trip_id = trip_row.get("id")
+        if trip_id not in (None, ""):
+            return "id", vin_key, str(trip_id)
+
+        start_at = trip_row.get("start_at")
+        end_at = trip_row.get("end_at")
+        distance = _to_float(trip_row.get("distance"))
+        duration = _to_float(trip_row.get("duration"))
+
+        if start_at not in (None, "") or end_at not in (None, ""):
+            return (
+                "time",
+                vin_key,
+                str(start_at or end_at),
+                round(distance, 3) if distance is not None else -1,
+                round(duration, 3) if duration is not None else -1,
+            )
+        return None
+
+    def _trip_quality_score(trip_row: dict) -> int:
+        if not isinstance(trip_row, dict):
+            return 0
+
+        score = 0
+        if _point_from_value(trip_row.get("start_position")):
+            score += 3
+        if _point_from_value(trip_row.get("end_position")):
+            score += 3
+
+        positions = trip_row.get("positions")
+        if isinstance(positions, dict):
+            latitudes = positions.get("lat")
+            longitudes = positions.get("long")
+            if isinstance(latitudes, list) and isinstance(longitudes, list):
+                score += min(len(latitudes), len(longitudes), 4)
+
+        if trip_row.get("end_at"):
+            score += 1
+        if trip_row.get("max_speed") is not None:
+            score += 1
+        if trip_row.get("done") is not None:
+            score += 1
+        if trip_row.get("consumption_fuel") is not None:
+            score += 1
+        return score
+
+    def _merge_trip_rows(primary: dict, secondary: dict) -> dict:
+        merged = dict(secondary or {})
+        for key, value in (primary or {}).items():
+            if not _is_missing_trip_value(value):
+                merged[key] = value
+        return _enrich_trip_row(merged)
+
+    def _merge_trip_sources(remote_trips: List[dict], local_trips: List[dict]) -> List[dict]:
+        merged_by_key = {}
+        merged_unkeyed = []
+
+        for source in (local_trips, remote_trips):
+            for trip in source:
+                trip_row = _enrich_trip_row(dict(trip))
+                merge_key = _trip_merge_key(trip_row)
+                if merge_key is None:
+                    merged_unkeyed.append(trip_row)
+                    continue
+
+                existing = merged_by_key.get(merge_key)
+                if existing is None:
+                    merged_by_key[merge_key] = trip_row
+                    continue
+
+                if _trip_quality_score(trip_row) >= _trip_quality_score(existing):
+                    merged_by_key[merge_key] = _merge_trip_rows(trip_row, existing)
+                else:
+                    merged_by_key[merge_key] = _merge_trip_rows(existing, trip_row)
+
+        merged = list(merged_by_key.values()) + merged_unkeyed
+        merged.sort(
+            key=lambda trip: str(_field(trip, "start_at", "end_at", "created_at", "createdAt") or ""),
+            reverse=True,
+        )
+        return merged
+
+    def _trips_need_remote_enrichment(trips: List[dict]) -> bool:
+        if not trips:
+            return True
+        points_found = 0
+        for trip in trips:
+            enriched = _enrich_trip_row(dict(trip))
+            if enriched.get("start_position") or enriched.get("end_position"):
+                points_found += 1
+                if points_found >= 1:
+                    return False
+        return True
 
     def _load_remote_trips(vin_filter: Optional[str] = None) -> List[dict]:
         if not _client_available() or not APP.is_good:
@@ -427,20 +1002,38 @@ def _load_trips(vin: Optional[str] = None) -> List[dict]:
             if car is None:
                 return []
             trips_by_vin = LocalTrips.get_trips(Cars([car]))
-            local_trips = trips_by_vin.get(vin, LocalTrips()).get_trips_as_dict()
-            if local_trips:
-                return local_trips
-            return _load_remote_trips(vin)
+            local_trips = []
+            for trip in trips_by_vin.get(vin, LocalTrips()).get_trips_as_dict():
+                trip_row = dict(trip)
+                trip_row["vin"] = vin
+                local_trips.append(_enrich_trip_row(trip_row))
 
-        merged = []
+            remote_trips = []
+            if not local_trips or _trips_need_remote_enrichment(local_trips):
+                remote_trips = _load_remote_trips(vin)
+            if remote_trips and local_trips:
+                return _merge_trip_sources(remote_trips, local_trips)
+            if remote_trips:
+                return remote_trips
+            return local_trips
+
+        local_merged = []
         trips_by_vin = LocalTrips.get_trips(APP.myp.vehicles_list)
         for vehicle_vin, trips in trips_by_vin.items():
             for trip in trips.get_trips_as_dict():
-                trip["vin"] = vehicle_vin
-                merged.append(trip)
-        if merged:
-            return merged
-        return _load_remote_trips()
+                trip_row = dict(trip)
+                trip_row["vin"] = vehicle_vin
+                local_merged.append(_enrich_trip_row(trip_row))
+
+        remote_trips = []
+        if not local_merged or _trips_need_remote_enrichment(local_merged):
+            remote_trips = _load_remote_trips()
+
+        if remote_trips and local_merged:
+            return _merge_trip_sources(remote_trips, local_merged)
+        if remote_trips:
+            return remote_trips
+        return local_merged
     except (KeyError, TypeError, IndexError):
         logger.debug("Failed to read trips", exc_info=True)
         return []
@@ -479,26 +1072,144 @@ def _coerce_for_config(value):
     return value
 
 
+def _reverse_geocode_cache_key(latitude: float, longitude: float) -> str:
+    return f"{latitude:.5f},{longitude:.5f}"
+
+
+def _reverse_geocode_label(payload: Dict[str, Any]) -> Optional[str]:
+    if not isinstance(payload, dict):
+        return None
+    address = payload.get("address")
+    if not isinstance(address, dict):
+        address = {}
+
+    road = (
+        address.get("road")
+        or address.get("pedestrian")
+        or address.get("residential")
+        or address.get("suburb")
+        or address.get("neighbourhood")
+    )
+    city = (
+        address.get("city")
+        or address.get("town")
+        or address.get("village")
+        or address.get("municipality")
+        or address.get("county")
+    )
+    country = address.get("country_code")
+    if isinstance(country, str):
+        country = country.upper()
+
+    parts = [item for item in (road, city, country) if isinstance(item, str) and item.strip()]
+    if parts:
+        return ", ".join(parts)
+
+    for field_name in ("name", "display_name"):
+        value = payload.get(field_name)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 def _extract_oauth_code(raw_value: Optional[str]) -> Optional[str]:
     if raw_value is None:
         return None
     value = str(raw_value).strip()
     if not value:
         return None
-    try:
-        parsed = urlparse(value)
-        if parsed.query:
-            code = parse_qs(parsed.query).get("code", [None])[0]
-            if code:
-                return code
-    except ValueError:
-        pass
-    if "code=" in value:
-        query_part = value.split("?", 1)[-1]
-        code = parse_qs(query_part).get("code", [None])[0]
-        if code:
-            return code
-    return value
+
+    # Handler can already provide the raw authorization code directly.
+    if all(token not in value for token in ("://", "?", "&", "=")):
+        return value
+
+    def _normalize_key(key: str) -> str:
+        return str(key).strip().lower().replace("-", "_")
+
+    def _parse_pairs(candidate: str):
+        if not candidate or "=" not in candidate:
+            return {}
+        try:
+            return parse_qs(candidate, keep_blank_values=True)
+        except ValueError:
+            return {}
+
+    def _iter_candidates(start_value: str):
+        pending = [start_value]
+        seen = set()
+        while pending and len(seen) < 256:
+            current = pending.pop(0)
+            if current is None:
+                continue
+            candidate = str(current).strip().strip('"')
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            yield candidate
+
+            decoded = unquote(candidate)
+            if decoded and decoded != candidate:
+                pending.append(decoded)
+
+            try:
+                parsed_candidate = urlparse(candidate)
+            except ValueError:
+                parsed_candidate = None
+
+            if parsed_candidate is None:
+                continue
+
+            for part in (parsed_candidate.query, parsed_candidate.fragment, parsed_candidate.path, parsed_candidate.netloc):
+                normalized_part = str(part or "").strip()
+                if not normalized_part:
+                    continue
+                normalized_part = normalized_part.lstrip("?#/")
+                pending.append(normalized_part)
+                for values in _parse_pairs(normalized_part).values():
+                    pending.extend(values)
+
+    code_keys = {"code", "authorization_code", "auth_code", "authorizationcode"}
+    for candidate in _iter_candidates(value):
+        try:
+            parsed_candidate = urlparse(candidate)
+        except ValueError:
+            parsed_candidate = None
+
+        sources = [candidate]
+        if parsed_candidate is not None:
+            sources.extend([parsed_candidate.query, parsed_candidate.fragment])
+
+        for source in sources:
+            for key, values in _parse_pairs(str(source).lstrip("?#")).items():
+                if _normalize_key(key) in code_keys:
+                    for item in values:
+                        extracted = str(item).strip()
+                        if extracted:
+                            return extracted
+
+        match = re.search(
+            r"(?:^|[?&#])(?:code|authorization_code|auth_code)=([^&#]+)",
+            candidate,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            return unquote(match.group(1)).strip()
+    return None
+
+
+def _normalize_oauth_scopes(raw_scopes: Any) -> List[str]:
+    if raw_scopes is None:
+        return []
+    if isinstance(raw_scopes, str):
+        return [scope for scope in raw_scopes.replace(",", " ").split() if scope]
+    if isinstance(raw_scopes, list):
+        normalized = []
+        for value in raw_scopes:
+            scope = str(value).strip()
+            if scope:
+                normalized.append(scope)
+        return normalized
+    return []
 
 
 def _config_section(section: str) -> BaseModel:
@@ -622,6 +1333,11 @@ def api_vehicle_photo(vin):
             return _error("Vehicle photo URL is invalid", status=502)
 
     resolved_parsed = urlsplit(resolved_picture_url)
+    if resolved_parsed.scheme in {"http", "https"} and "groupe-psa" not in resolved_parsed.netloc and "mpsa" not in resolved_parsed.netloc:
+        # 3D visual hosts (for example visuel3d-secure.*) are public image endpoints.
+        # Redirecting avoids backend proxy incompatibilities and lets browser cache directly.
+        return redirect(resolved_picture_url, code=302)
+
     if "groupe-psa" in resolved_parsed.netloc or "mpsa" in resolved_parsed.netloc:
         client_id = getattr(APP.myp, "client_id", None)
         if client_id:
@@ -639,6 +1355,7 @@ def api_vehicle_photo(vin):
     headers = {
         "Accept": "image/*",
         "x-introspect-realm": getattr(APP.myp, "realm", ""),
+        "User-Agent": "PSACC-PWA/1.0",
     }
     access_token = getattr(getattr(APP.myp, "manager", None), "access_token", None)
     if access_token:
@@ -759,10 +1476,160 @@ def api_trips():
     return jsonify(_load_trips(vin))
 
 
+@app.route("/api/trips/<string:vin>/<string:trip_id>/path")
+def api_trip_path(vin: str, trip_id: str):
+    missing = _require_client()
+    if missing:
+        return missing
+    if not _authenticated():
+        return _error("Authentication required", status=401)
+
+    car = _get_vehicle(vin)
+    if car is None:
+        return _error(f"Unknown VIN: {vin}", status=404)
+    if not trip_id:
+        return _error("trip_id is required", status=400)
+
+    points = []
+    source = "waypoints"
+    warning = None
+    try:
+        points = _trip_waypoints_for_vehicle(car, trip_id)
+    except ApiException as ex:
+        if ex.status in (401, 403):
+            return _error(
+                "Trip path access denied. Re-authenticate and ensure trip/location scopes are granted.",
+                status=ex.status,
+            )
+        if ex.status == 404:
+            source = "waypoints_not_found"
+            warning = "Trip waypoints not available from provider for this trip."
+            logger.info("Trip waypoints not found for VIN %s trip %s", vin, trip_id)
+        else:
+            source = "waypoints_provider_error"
+            warning = "Trip waypoints provider error. Showing fallback map data."
+            logger.warning(
+                "Trip path request failed upstream for VIN %s trip %s (status=%s). Falling back to trip payload.",
+                vin,
+                trip_id,
+                ex.status,
+            )
+    except Exception:  # pragma: no cover - defensive handler
+        source = "waypoints_error"
+        warning = "Trip waypoints request failed. Showing fallback map data."
+        logger.warning("Trip path request failed for VIN %s trip %s. Falling back to trip payload.", vin, trip_id, exc_info=True)
+
+    if not points:
+        for trip in _load_trips(vin):
+            trip_identifier = _field_value(trip, "id")
+            if str(trip_identifier) != str(trip_id):
+                continue
+            positions = _field_value(trip, "positions")
+            latitudes = _field_value(positions, "lat") if isinstance(positions, dict) else None
+            longitudes = _field_value(positions, "long") if isinstance(positions, dict) else None
+            if isinstance(latitudes, list) and isinstance(longitudes, list):
+                fallback_points = []
+                for latitude, longitude in zip(latitudes, longitudes):
+                    point = _trip_point_payload(latitude, longitude)
+                    if point:
+                        fallback_points.append(point)
+                points = fallback_points
+                source = "trips_fallback"
+            if not points:
+                start_position = _trip_point_from_value(_field_value(trip, "start_position"))
+                end_position = _trip_point_from_value(_field_value(trip, "end_position"))
+                if start_position and end_position:
+                    points = [start_position, end_position]
+                    source = "trip_markers_fallback"
+                elif start_position:
+                    points = [start_position]
+                    source = "trip_start_marker_fallback"
+            break
+
+    positions = _positions_from_points(points)
+    start_position = points[0] if points else None
+    end_position = points[-1] if points else None
+    response_payload = {
+        "ok": True,
+        "vin": vin,
+        "trip_id": trip_id,
+        "source": source if points else "empty",
+        "point_count": len(points),
+        "points": points,
+        "positions": positions,
+        "start_position": start_position,
+        "end_position": end_position,
+    }
+    if warning:
+        response_payload["warning"] = warning
+    return jsonify(response_payload)
+
+
 @app.route("/api/chargings")
 def api_chargings():
     vin = request.args.get("vin")
     return jsonify(_load_chargings(vin))
+
+
+@app.route("/api/geocode/reverse")
+def api_reverse_geocode():
+    if not _authenticated():
+        return _error("Authentication required", status=401)
+
+    try:
+        latitude = float(request.args.get("lat", ""))
+        longitude = float(request.args.get("lon", ""))
+    except (TypeError, ValueError):
+        return _error("lat and lon query parameters are required", status=400)
+
+    if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
+        return _error("lat/lon out of range", status=400)
+
+    cache_key = _reverse_geocode_cache_key(latitude, longitude)
+    cached = REVERSE_GEOCODE_CACHE.get(cache_key)
+    if cached:
+        return jsonify(cached)
+
+    try:
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={
+                "format": "jsonv2",
+                "lat": latitude,
+                "lon": longitude,
+                "zoom": 16,
+                "addressdetails": 1,
+            },
+            headers={
+                "User-Agent": "PSACC-PWA/1.0 (self-hosted reverse geocoding)",
+                "Accept-Language": "en",
+            },
+            timeout=10,
+        )
+    except requests.RequestException:
+        logger.debug("Reverse geocode request failed for %s", cache_key, exc_info=True)
+        return _error("Reverse geocoding service unavailable", status=502)
+
+    if response.status_code == 429:
+        return _error("Reverse geocoding rate limit reached. Try again in a moment.", status=429)
+    if not response.ok:
+        logger.debug("Reverse geocode failed status=%s body=%s", response.status_code, response.text)
+        return _error("Reverse geocoding failed", status=502)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        return _error("Reverse geocoding returned invalid payload", status=502)
+
+    label = _reverse_geocode_label(payload) or f"{latitude:.5f}, {longitude:.5f}"
+    result = {
+        "ok": True,
+        "label": label,
+        "display_name": payload.get("display_name") if isinstance(payload.get("display_name"), str) else label,
+        "openstreetmap_url": _openstreetmap_url(latitude, longitude),
+    }
+    REVERSE_GEOCODE_CACHE[cache_key] = result
+    return jsonify(result)
 
 
 @app.route("/api/battery/soh/<string:vin>")
@@ -945,6 +1812,29 @@ def api_setup_oauth():
         return jsonify({"ok": True, "message": "OAuth setup completed"})
     except Exception as ex:
         logger.exception("OAuth setup failed")
+        return _error(str(ex), status=500)
+
+
+@app.route("/api/setup/oauth/retry", methods=["POST"])
+def api_setup_oauth_retry():
+    if INITIAL_SETUP is None:
+        return _error("Setup session is missing. Run login setup first.", status=400)
+
+    body = request.get_json(silent=True) or {}
+    scopes = _normalize_oauth_scopes(body.get("scopes")) or ["openid", "profile", "data:vehicle:devices:pnc"]
+
+    try:
+        INITIAL_SETUP.psacc.service_information.scopes = scopes
+        INITIAL_SETUP.psacc.manager.service_information.scopes = scopes
+        redirect_url = INITIAL_SETUP.psacc.manager.generate_redirect_url(scopes=scopes)
+        return jsonify({
+            "ok": True,
+            "redirect_url": redirect_url,
+            "scopes": scopes,
+            "warning": "OAuth retried with reduced scopes. Trip/location data may be unavailable for this client.",
+        })
+    except Exception as ex:
+        logger.exception("OAuth retry URL generation failed")
         return _error(str(ex), status=500)
 
 

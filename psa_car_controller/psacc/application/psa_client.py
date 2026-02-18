@@ -25,7 +25,7 @@ from .abrp import Abrp
 from psa_car_controller.psacc.repository.db import Database
 from psa_car_controller.common.mylogger import CustomLogger
 
-SCOPE = ["openid", "profile", "data:trip", "data:position"]
+DEFAULT_OAUTH_SCOPES = ["openid", "profile", "data:vehicle:devices:pnc", "data:trip", "data:position"]
 CARS_FILE = "cars.json"
 DEFAULT_CONFIG_FILENAME = "config.json"
 
@@ -33,6 +33,30 @@ logger = CustomLogger.getLogger(__name__)
 
 
 class PSAClient:
+    @staticmethod
+    def _to_dict_payload(value: Any):
+        if isinstance(value, dict):
+            return value
+        if hasattr(value, "to_dict"):
+            try:
+                converted = value.to_dict()
+                if isinstance(converted, dict):
+                    return converted
+            except Exception:
+                logger.debug("Unable to convert payload to dict", exc_info=True)
+        return None
+
+    @staticmethod
+    def _normalize_scopes(scopes):
+        if scopes is None:
+            return []
+        if isinstance(scopes, str):
+            return [scope for scope in scopes.replace(",", " ").split() if scope]
+        try:
+            return [str(scope).strip() for scope in scopes if str(scope).strip()]
+        except TypeError:
+            return []
+
     def connect(self, code: str):
         self.manager.connect_with_code(code)
         self.api_config.access_token = self.manager.access_token or ""
@@ -40,13 +64,14 @@ class PSAClient:
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, refresh_token, client_id, client_secret, remote_refresh_token, customer_id, realm, country_code,
-                 brand=None, proxies=None, weather_api=None, abrp=None, co2_signal_api=None):
+                 brand=None, proxies=None, weather_api=None, abrp=None, co2_signal_api=None, scopes=None):
         self.realm = realm
+        oauth_scopes = self._normalize_scopes(scopes) or list(DEFAULT_OAUTH_SCOPES)
         self.service_information = ServiceInformation(AUTHORIZE_SERVICE[self.realm],
                                                       realm_info[self.realm]['oauth_url'],
                                                       client_id,
                                                       client_secret,
-                                                      SCOPE, True)
+                                                      oauth_scopes, True)
         self.client_id = client_id
         self.country_code = country_code
         self.manager = OpenIdCredentialManager.create(self.service_information,
@@ -117,16 +142,27 @@ class PSAClient:
 
     @staticmethod
     def _extract_embedded_vehicles(payload: Any) -> List[Dict[str, Any]]:
-        if not isinstance(payload, dict):
+        payload_dict = PSAClient._to_dict_payload(payload)
+        if not isinstance(payload_dict, dict):
             return []
-        embedded = payload.get("_embedded") or payload.get("embedded")
+        embedded = payload_dict.get("_embedded") or payload_dict.get("embedded")
         if isinstance(embedded, dict):
             vehicles = embedded.get("vehicles")
             if isinstance(vehicles, list):
-                return [vehicle for vehicle in vehicles if isinstance(vehicle, dict)]
-        vehicles = payload.get("vehicles")
+                normalized = []
+                for vehicle in vehicles:
+                    vehicle_dict = PSAClient._to_dict_payload(vehicle)
+                    if isinstance(vehicle_dict, dict):
+                        normalized.append(vehicle_dict)
+                return normalized
+        vehicles = payload_dict.get("vehicles")
         if isinstance(vehicles, list):
-            return [vehicle for vehicle in vehicles if isinstance(vehicle, dict)]
+            normalized = []
+            for vehicle in vehicles:
+                vehicle_dict = PSAClient._to_dict_payload(vehicle)
+                if isinstance(vehicle_dict, dict):
+                    normalized.append(vehicle_dict)
+            return normalized
         return []
 
     @staticmethod
@@ -174,11 +210,23 @@ class PSAClient:
 
     @classmethod
     def _extract_picture_url(cls, raw_vehicle: Dict[str, Any]):
+        raw_vehicle = cls._to_dict_payload(raw_vehicle)
+        if not isinstance(raw_vehicle, dict):
+            return None
         containers = []
+        extension = None
+        embedded = raw_vehicle.get("_embedded") or raw_vehicle.get("embedded")
+        if isinstance(embedded, dict):
+            extension = embedded.get("extension")
+        if extension is None:
+            extension = raw_vehicle.get("extension")
         branding = raw_vehicle.get("branding")
         if isinstance(branding, dict):
             containers.append(branding.get("pictures"))
             containers.append(branding)
+        if isinstance(extension, dict):
+            containers.append(extension.get("pictures"))
+            containers.append(extension.get("branding"))
         containers.append(raw_vehicle.get("pictures"))
 
         for container in containers:
@@ -191,6 +239,9 @@ class PSAClient:
 
     @staticmethod
     def _extract_supports_electric(raw_vehicle: Dict[str, Any]):
+        raw_vehicle = PSAClient._to_dict_payload(raw_vehicle)
+        if not isinstance(raw_vehicle, dict):
+            return None
         engines = raw_vehicle.get("engine")
         if not isinstance(engines, list):
             return None
@@ -229,6 +280,9 @@ class PSAClient:
 
     @staticmethod
     def _extract_brand_and_label(raw_vehicle: Dict[str, Any]):
+        raw_vehicle = PSAClient._to_dict_payload(raw_vehicle)
+        if not isinstance(raw_vehicle, dict):
+            return None, None
         brand = raw_vehicle.get("brand")
         label = raw_vehicle.get("label")
         branding = raw_vehicle.get("branding")
@@ -241,14 +295,16 @@ class PSAClient:
 
     def _load_raw_vehicles_payload(self):
         query_variants = [
-            [("extension", "branding"), ("extension", "onboardCapabilities")],
+            [("extension", "branding"), ("extension", "pictures"), ("extension", "onboardCapabilities")],
+            [("extension", "pictures"), ("extension", "branding")],
+            [("extension", "pictures")],
             [("extension", "branding")],
             None,
         ]
         last_error = None
         for query_params in query_variants:
             try:
-                return self.api().api_client.call_api(
+                payload = self.api().api_client.call_api(
                     "/user/vehicles",
                     "GET",
                     query_params=query_params,
@@ -256,20 +312,30 @@ class PSAClient:
                     auth_settings=["Vehicle_auth", "client_id", "realm"],
                     _return_http_data_only=True,
                 )
+                payload_dict = self._to_dict_payload(payload)
+                if isinstance(payload_dict, dict):
+                    return payload_dict
+                return payload
             except ApiException as ex:
                 last_error = ex
-                if ex.status in {400, 404}:
+                if ex.status in {400, 404, 422, 500, 502, 503, 504}:
+                    logger.debug("raw vehicles fetch failed for params=%s status=%s", query_params, ex.status)
                     continue
-                raise
+                if ex.status in {401, 403}:
+                    raise
+                logger.debug("raw vehicles fetch unexpected failure for params=%s", query_params, exc_info=True)
+                continue
         if last_error is not None:
-            raise last_error
+            logger.debug("All raw vehicles query variants failed; using fallback paths", exc_info=True)
         return None
 
     def _load_raw_vehicle_detail(self, vehicle_id: str):
         if not vehicle_id:
             return None
         query_variants = [
-            [("extension", "branding"), ("extension", "onboardCapabilities")],
+            [("extension", "branding"), ("extension", "pictures"), ("extension", "onboardCapabilities")],
+            [("extension", "pictures"), ("extension", "branding")],
+            [("extension", "pictures")],
             [("extension", "branding")],
             None,
         ]
@@ -284,11 +350,17 @@ class PSAClient:
                     auth_settings=["Vehicle_auth", "client_id", "realm"],
                     _return_http_data_only=True,
                 )
-                if isinstance(payload, dict):
-                    return payload
+                payload_dict = self._to_dict_payload(payload)
+                if isinstance(payload_dict, dict):
+                    return payload_dict
+                return payload
             except ApiException as ex:
-                if ex.status in {400, 404}:
+                if ex.status in {400, 404, 422, 500, 502, 503, 504}:
+                    logger.debug("raw vehicle detail fetch failed for %s params=%s status=%s",
+                                 vehicle_id, query_params, ex.status)
                     continue
+                if ex.status in {401, 403}:
+                    break
                 logger.debug("raw vehicle detail fetch failed for %s", vehicle_id, exc_info=True)
                 break
             except (TypeError, ValueError, AttributeError):
@@ -397,6 +469,30 @@ class PSAClient:
                 if not vin:
                     continue
                 metadata = raw_metadata.get(vin, {})
+                vehicle_id = getattr(vehicle, "id", None) or metadata.get("vehicle_id")
+
+                fallback_detail = None
+                if vehicle_id:
+                    fallback_detail = self._load_raw_vehicle_detail(vehicle_id)
+
+                picture_url = metadata.get("picture_url")
+                if not picture_url and fallback_detail is not None:
+                    picture_url = self._extract_picture_url(fallback_detail)
+                if not picture_url and vehicle_id:
+                    try:
+                        generated_detail = self.api().get_vehicle_byid(vehicle_id)
+                        picture_url = self._extract_picture_url(generated_detail)
+                        if not metadata.get("brand") or not metadata.get("label"):
+                            detail_brand, detail_label = self._extract_brand_and_label(generated_detail)
+                            metadata["brand"] = metadata.get("brand") or detail_brand
+                            metadata["label"] = metadata.get("label") or detail_label
+                        if metadata.get("supports_electric") is None:
+                            metadata["supports_electric"] = self._extract_supports_electric(generated_detail)
+                    except ApiException:
+                        logger.debug("generated vehicle detail fetch failed for %s", vehicle_id, exc_info=True)
+                    except (InvalidHeader, TypeError, ValueError, AttributeError):
+                        logger.debug("generated vehicle detail payload invalid for %s", vehicle_id, exc_info=True)
+                metadata["picture_url"] = picture_url
 
                 supports_electric = None
                 engines = getattr(vehicle, "engine", None)
@@ -414,7 +510,7 @@ class PSAClient:
 
                 self.vehicles_list.add(Car(
                     vin,
-                    getattr(vehicle, "id", None) or metadata.get("vehicle_id"),
+                    vehicle_id,
                     getattr(vehicle, "brand", None) or metadata.get("brand") or "Unknown",
                     getattr(vehicle, "label", None) or metadata.get("label"),
                     picture_url=metadata.get("picture_url"),
@@ -542,6 +638,7 @@ class PSAClientEncoder(JSONEncoder):
                "client_id": mp.account_info.client_id,
                "realm": mp.account_info.realm,
                "country_code": mp.account_info.country_code,
+               "scopes": list(mp.service_information.scopes),
                "weather_api": mp.weather_api,
                "co2_signal_api": Ecomix.co2_signal_key
                }

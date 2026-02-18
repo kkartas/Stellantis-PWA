@@ -66,8 +66,12 @@ powershell -ExecutionPolicy Bypass -File .\tools\unregister-mymap-protocol.ps1
 Optional environment overrides:
 
 - `PSACC_OAUTH_API_URL` (default: `http://127.0.0.1:5000/api/setup/oauth`)
+- `PSACC_OAUTH_RETRY_API_URL` (default: `http://127.0.0.1:5000/api/setup/oauth/retry`)
 - `PSACC_UI_URL` (default: `http://127.0.0.1:5000/`)
-- `PSACC_HANDLER_SHOW_UI=1` (show popup messages)
+- `PSACC_OAUTH_TIMEOUT` (default: `90` seconds)
+- `PSACC_OAUTH_RETRIES` (default: `0`)
+- `PSACC_OAUTH_FALLBACK_SCOPES` (default: `openid profile`)
+- `PSACC_HANDLER_SHOW_UI` (default: `1`, set `0` to disable popup messages)
 
 Protocol test helper:
 
@@ -78,6 +82,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\test-mymap-protocol.ps1 -Code D
 Handler log file (best effort):
 
 - `%LOCALAPPDATA%\psacc-mymap-handler.log`
+- For Microsoft Store Python, file redirection may place logs under:
+  `%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\Local\psacc-mymap-handler.log`
 
 ## Notes
 

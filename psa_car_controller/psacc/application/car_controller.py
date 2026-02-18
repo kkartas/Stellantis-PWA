@@ -82,7 +82,7 @@ class PSACarController(metaclass=Singleton):
                 return False
         return False
 
-    def load_app(self) -> bool:
+    def load_app(self, start_remote=True) -> bool:
         my_logger(handler_level=int(self.args.debug))
 
         logger.info("App version %s", __version__)
@@ -120,7 +120,7 @@ class PSACarController(metaclass=Singleton):
                 self.myp.info_refresh_rate = self.args.refresh * 60
                 if self.is_good:
                     self.myp.start_refresh_thread()
-            if self.is_good:
+            if self.is_good and start_remote:
                 self.start_remote_control()
             elif not self.args.web_conf:
                 raise ConnectionError
