@@ -1,4 +1,18 @@
-enum Brand { citroen, ds, opel, peugeot, vauxhall }
+enum Brand {
+  alfaRomeo,
+  chrysler,
+  citroen,
+  dodge,
+  ds,
+  fiat,
+  jeep,
+  lancia,
+  maserati,
+  opel,
+  peugeot,
+  ram,
+  vauxhall,
+}
 
 class BrandConstants {
   BrandConstants._();
@@ -38,26 +52,34 @@ class BrandConstants {
   };
 
   static const Map<Brand, String> tokenUrl = {
-    Brand.citroen: 'https://idpcvs.citroen.com/am/oauth2/access_token',
+    Brand.citroen:
+        'https://idpcvs.citroen.com/am/oauth2/access_token',
     Brand.ds: 'https://idpcvs.driveds.com/am/oauth2/access_token',
     Brand.opel: 'https://idpcvs.opel.com/am/oauth2/access_token',
-    Brand.peugeot: 'https://idpcvs.peugeot.com/am/oauth2/access_token',
-    Brand.vauxhall: 'https://idpcvs.vauxhall.co.uk/am/oauth2/access_token',
+    Brand.peugeot:
+        'https://idpcvs.peugeot.com/am/oauth2/access_token',
+    Brand.vauxhall:
+        'https://idpcvs.vauxhall.co.uk/am/oauth2/access_token',
   };
 
   static const Map<Brand, String> authorizeUrl = {
-    Brand.citroen: 'https://idpcvs.citroen.com/am/oauth2/authorize',
+    Brand.citroen:
+        'https://idpcvs.citroen.com/am/oauth2/authorize',
     Brand.ds: 'https://idpcvs.driveds.com/am/oauth2/authorize',
     Brand.opel: 'https://idpcvs.opel.com/am/oauth2/authorize',
-    Brand.peugeot: 'https://idpcvs.peugeot.com/am/oauth2/authorize',
-    Brand.vauxhall: 'https://idpcvs.vauxhall.co.uk/am/oauth2/authorize',
+    Brand.peugeot:
+        'https://idpcvs.peugeot.com/am/oauth2/authorize',
+    Brand.vauxhall:
+        'https://idpcvs.vauxhall.co.uk/am/oauth2/authorize',
   };
 
   /// Base URL for the PSA Connected Car v4 REST API.
-  static const String apiBaseUrl = 'https://api.groupe-psa.com/connectedcar/v4';
+  static const String apiBaseUrl =
+      'https://api.groupe-psa.com/connectedcar/v4';
 
-  /// Remote-access token endpoint prefix; append client_id as query param.
-  static const String remoteAccessTokenUrl = 'https://api.groupe-psa.com'
+  /// Remote-access token endpoint; append client_id as query param.
+  static const String remoteAccessTokenUrl =
+      'https://api.groupe-psa.com'
       '/connectedcar/v4/virtualkey/remoteaccess/token?client_id=';
 
   /// MQTT broker host.
