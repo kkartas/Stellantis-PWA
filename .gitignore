@@ -160,6 +160,11 @@ mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/.packages
 mobile/build/
+# Un-ignore Flutter source tree (overrides the Python `lib/` rule above)
+!mobile/lib/
+!mobile/lib/**
+!mobile/test/
+!mobile/test/**
 
 # Legacy state files — contain real credentials/personal data
 docs/legacy/sample_data/*
