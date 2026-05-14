@@ -184,7 +184,7 @@ class TripParser {
 
   static double _durationHours(TripPoint from, TripPoint to) {
     final ms = to.timestamp.difference(from.timestamp).inMilliseconds;
-    return ms / 3_600_000;
+    return ms / 3600000;
   }
 
   static double _speed(double distance, double duration) =>

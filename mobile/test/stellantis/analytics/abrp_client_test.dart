@@ -40,7 +40,7 @@ void main() {
       emptyToken.enableAbrp('VR3UHZKX', enable: true);
       final result = await emptyToken.send(
         'VR3UHZKX',
-        const AbrpTelemetry(utc: 1_614_595_200, soc: 75),
+        const AbrpTelemetry(utc: 1614595200, soc: 75),
       );
       expect(result, isFalse);
       verifyNever(() => mockDio.post<Map<String, dynamic>>(any()));
@@ -49,7 +49,7 @@ void main() {
     test('send returns false when VIN is not enabled (no HTTP call)', () async {
       final result = await client.send(
         'VR3UHZKX',
-        const AbrpTelemetry(utc: 1_614_595_200, soc: 75),
+        const AbrpTelemetry(utc: 1614595200, soc: 75),
       );
       expect(result, isFalse);
       verifyNever(() => mockDio.post<Map<String, dynamic>>(any()));
@@ -73,7 +73,7 @@ void main() {
       client.enableAbrp('VR3UHZKX', enable: true);
       final result = await client.send(
         'VR3UHZKX',
-        const AbrpTelemetry(utc: 1_614_595_200, soc: 75),
+        const AbrpTelemetry(utc: 1614595200, soc: 75),
       );
       expect(result, isTrue);
     });
@@ -96,7 +96,7 @@ void main() {
       client.enableAbrp('VR3UHZKX', enable: true);
       final result = await client.send(
         'VR3UHZKX',
-        const AbrpTelemetry(utc: 1_614_595_200, soc: 75),
+        const AbrpTelemetry(utc: 1614595200, soc: 75),
       );
       expect(result, isFalse);
     });
