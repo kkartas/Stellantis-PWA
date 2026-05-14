@@ -11,3 +11,9 @@ linter:
     # Requiring doc comments on every internal widget constructor and method
     # adds noise without benefit; disabled at project level.
     public_member_api_docs: false
+    # cascade_invocations: the inWebo tokenizer consumes values positionally;
+    # mixing cascades with return-value captures harms readability.
+    cascade_invocations: false
+    # use_late_for_private_fields_and_variables: OtpService uses nullable
+    # fields as state flags (null = not yet initialized); late would lose that.
+    use_late_for_private_fields_and_variables: false
