@@ -197,18 +197,20 @@ Each step ends with a git commit using **Conventional Commits**:
 
 Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>`.
 
-### Phase 0 — Audit & reset *(~½ day)*
+### Phase 0 — Audit & reset *(~½ day)* ✅ COMPLETE
 
-| # | Task | Commit message |
-|---|---|---|
-| 0.1 | Land this plan | `docs: add migration plan` |
-| 0.2 | Snapshot legacy state in `docs/LEGACY_AUDIT.md` (every feature, where it lived) | `docs: capture legacy feature audit` |
-| 0.3 | Delete `backend/` | `chore: remove abandoned backend scaffold` |
-| 0.4 | Delete prior `mobile/` scaffold contents (keep folder) | `chore: reset mobile scaffold` |
-| 0.5 | Restore brand SVGs from git history into `docs/legacy/brands/` for reference | `chore: preserve brand SVGs from legacy PWA` |
-| 0.6 | Move `info.db`, `cars.json`, `config.json`, `otp.bin` out of root → `docs/legacy/sample_data/` (gitignored if private) | `chore: relocate legacy state files` |
-| 0.7 | Rewrite root README with new architecture intro | `docs: rewrite README for direct-to-Stellantis app` |
-| 0.8 | Delete `Dockerfile`, `docker-compose.yml`, `.eslintrc.yml`, Windows mymap scripts | `chore: remove obsolete server tooling` |
+| # | Task | Commit message | Status |
+|---|---|---|---|
+| 0.1 | Land this plan | `docs: add migration plan` | [x] e065d40 |
+| 0.2 | Snapshot legacy state in `docs/LEGACY_AUDIT.md` (every feature, where it lived) | `docs: capture legacy feature audit` | [x] c8a5d9d |
+| 0.3 | Delete `backend/` + `API_CONTRACT.md` + `MIGRATION_NOTES.md`; add `docs/legacy/README.md` | `chore: remove abandoned backend scaffold` | [x] 04153d6 |
+| 0.4 | Delete prior `mobile/` scaffold contents (keep folder with `.gitkeep`) | `chore: reset mobile scaffold for fresh flutter create` | [x] 3d38bd9 |
+| 0.5 | Restore brand SVGs from git history into `docs/legacy/brands/` for reference | `chore: preserve brand SVGs from legacy PWA` | [x] 21746d2 |
+| 0.6 | Move state files out of root → `docs/legacy/sample_data/` (gitignored); move API refs to `docs/stellantis/` | `chore: relocate legacy state files and api references` | [x] a3bdcea |
+| 0.7 | Stage and commit all deleted legacy web/PWA/docs files | `chore: remove legacy flask/dash/pwa web layer` | [x] c570ea9 |
+| 0.8 | Delete `Dockerfile`, `docker-compose.yml`, `.eslintrc.yml`, Windows mymap scripts, service file | `chore: remove obsolete server and windows-protocol tooling` | [x] bc91a2c |
+| 0.9 | Rewrite root README with new architecture | `docs: rewrite README for direct-to-stellantis mobile app` | [x] 617b0a4 |
+| 0.10 | Mark Phase 0 complete (this commit) | `docs: mark phase 0 complete` | [x] HEAD |
 
 ### Phase 1 — Flutter foundation *(~1 day)*
 
