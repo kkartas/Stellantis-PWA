@@ -10,11 +10,13 @@ class StellantisApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final theme = ref.watch(brandThemeProvider).toMaterialTheme();
+    final brand = ref.watch(brandThemeProvider);
 
     return MaterialApp.router(
       title: 'Stellantis',
-      theme: theme,
+      theme: brand.lightTheme,
+      darkTheme: brand.darkTheme,
+
       routerConfig: router,
     );
   }
