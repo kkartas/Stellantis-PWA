@@ -1,96 +1,112 @@
-# Stellantis PWA Car Controller
+# Stellantis Mobile
 
-Python backend for Stellantis/PSA connected vehicles with an installable Progressive Web App frontend.
+A single Flutter mobile app (iOS + Android) that talks **directly** to the Stellantis
+connected-car cloud — no backend, no server, no proxy.
 
-## What This Refactor Delivers
+The app replicates and extends everything the original Python `psa_car_controller` project
+provided, as a native, offline-first, brand-adaptive mobile experience.
 
-- Flask API + static PWA frontend (no Dash runtime dependency for the UI path)
-- Installable app (`manifest.webmanifest` + service worker)
-- Offline shell support with cached app assets
-- Mobile-first interface with tabs for:
-  - Overview (status + summary)
-  - Vehicle controls
-  - Trips
-  - Charging sessions
-  - Settings
-  - Setup (login/oauth/otp)
-- Legacy HTTP endpoints kept for backward compatibility
+> **Status:** Pre-alpha. Phase 0 (audit & repo reset) is complete. Flutter scaffold begins in Phase 1.
 
-## Core Features Kept
+---
 
-- Vehicle status and refresh/wakeup
-- Start/stop charging
-- Charge threshold and stop-hour control
-- Delayed charge hour update
-- Preconditioning control
-- Lights/horn control
-- Door lock/unlock
-- Trips and charging session retrieval
-- Battery SOH and ABRP integration controls
-- Config updates through API/UI
+## What it is
 
-## Quick Start
+| | |
+|---|---|
+| **Target platforms** | Android, iOS |
+| **Architecture** | Flutter app → Stellantis API directly (OAuth2 + MQTTS) |
+| **No backend** | The app holds client secrets (same as the official My* apps), stores tokens in Keychain/EncryptedSharedPreferences, and speaks OAuth + MQTT directly |
+| **Brand-adaptive** | Auto-detects brand from account response; applies full theme (colors, type, motion, logo) at runtime |
+| **Offline-first** | Every screen paints from local Isar cache instantly; network refreshes in background |
 
-1. Install requirements (Python 3.11+ recommended):
+---
 
-```bash
-pip install -e .
+## Brands supported
+
+| Brand | OAuth realm | Redirect scheme |
+|---|---|---|
+| Peugeot | clientsB2CPeugeot | `mymap://` |
+| Citroën | clientsB2CCitroen | `mymacsdk://` |
+| DS Automobiles | clientsB2CDS | `mymdssdk://` |
+| Opel | clientsB2COpel | `mymopsdk://` |
+| Vauxhall | clientsB2CVauxhall | `mymvxsdk://` |
+| Fiat | — | — |
+| Alfa Romeo | — | — |
+| Jeep | — | — |
+| Lancia | — | — |
+| Maserati | — | — |
+
+Entries marked `—` are visually supported (theme + logo) but require APK secret extraction
+in Phase 2. The first five brands are fully documented in the legacy Python project.
+
+---
+
+## Repository layout
+
+```
+/
+├── mobile/                     # Flutter app (the product) — Phase 1+
+│   └── .gitkeep                # Placeholder; replaced by flutter create in Phase 1
+├── tools/
+│   ├── extract_secrets/        # Dart CLI: extract OAuth secrets from brand APK
+│   └── import_legacy_db/       # Dart CLI: import legacy info.db → Isar
+├── docs/
+│   ├── LEGACY_AUDIT.md         # Full feature snapshot of the Python project
+│   ├── ARCHITECTURE.md         # (Phase 1) Layers, data flow, threading
+│   ├── BRANDS.md               # (Phase 4) Per-brand design tokens
+│   ├── STELLANTIS_API.md       # (Phase 2) Reverse-engineered API reference
+│   ├── SECURITY.md             # (Phase 2+9) Secret handling, threat model
+│   ├── RELEASE.md              # (Phase 1+9) Build, sign, distribute, hotpatch
+│   ├── adr/                    # Architecture Decision Records
+│   ├── legacy/
+│   │   ├── brands/             # SVG brand logos from the legacy PWA
+│   │   └── sample_data/        # Gitignored. Local copy of info.db, config.json, etc.
+│   └── stellantis/
+│       ├── api-b2c.yaml        # Stellantis API OpenAPI spec (reference)
+│       └── api_spec.md         # Human-readable API notes
+├── psa_car_controller/         # Legacy Python project (port reference — removed in Phase 10)
+├── codemagic.yaml              # CI/CD (Phase 9)
+├── shorebird.yaml              # Code-push (Phase 9)
+├── MIGRATION_PLAN.md           # Full phased execution plan
+└── README.md                   # This file
 ```
 
-2. Start the controller:
+---
 
-```bash
-psa-car-controller --web-conf -c -r
+## How to run
+
+> Phase 1 will add real instructions. This is a placeholder.
+
+**Prerequisites:** Flutter 3.x, Dart 3.x, Android Studio / Xcode
+
+```sh
+# Phase 1 will scaffold the project — placeholder command:
+flutter create mobile --org com.stellantis.app --platforms=android,ios
+cd mobile
+flutter pub get
+flutter run
 ```
 
-3. Open the app:
+Full build, sign, and distribution instructions will live in `docs/RELEASE.md` (Phase 1).
 
-```text
-http://localhost:5000
-```
+---
 
-4. Install the PWA from your browser (desktop or mobile) using the browser install prompt.
+## Key documents
 
-## New API Surface (`/api/*`)
+| Document | Purpose |
+|---|---|
+| [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) | Full phased plan with commit-by-commit task list |
+| [`docs/LEGACY_AUDIT.md`](docs/LEGACY_AUDIT.md) | Every feature the Python project shipped, where it lived, and where it lands in Flutter |
+| [`docs/stellantis/api-b2c.yaml`](docs/stellantis/api-b2c.yaml) | Stellantis API OpenAPI spec (used in Phase 2 to generate Dart models) |
+| `docs/STELLANTIS_API.md` | Human-readable API reference (Phase 2) |
+| `docs/BRANDS.md` | Per-brand palette, typography, motion language (Phase 4) |
+| `docs/SECURITY.md` | Secret extraction, token storage, threat model (Phase 2+9) |
 
-- `GET /api/health`
-- `GET /api/vehicles`
-- `GET /api/vehicle/<vin>`
-- `GET /api/dashboard/<vin>`
-- `GET /api/trips?vin=<vin>`
-- `GET /api/chargings?vin=<vin>`
-- `GET /api/settings`
-- `GET|POST /api/settings/<section>`
-- `POST /api/vehicle/<vin>/wakeup`
-- `POST /api/vehicle/<vin>/charge`
-- `POST /api/vehicle/<vin>/preconditioning`
-- `POST /api/vehicle/<vin>/horn`
-- `POST /api/vehicle/<vin>/lights`
-- `POST /api/vehicle/<vin>/doors`
-- `POST /api/vehicle/<vin>/charge-hour`
-- `POST /api/vehicle/<vin>/charge-control`
-- `POST /api/vehicle/<vin>/abrp`
-- `POST /api/setup/login`
-- `POST /api/setup/oauth`
-- `POST /api/setup/otp/sms`
-- `POST /api/setup/otp`
+---
 
-## Legacy API Compatibility
+## License
 
-Existing endpoints like `/get_vehicleinfo/<vin>`, `/charge_now/...`, `/settings`, `/vehicles/trips`, etc. are still available.
-
-## Documentation
-
-- Install: `docs/Install.md`
-- Docker: `docs/Docker.md`
-- API examples (legacy): `docs/psacc_api.md`
-- PWA architecture: `docs/PWA.md`
-- FAQ: `FAQ.md`
-
-## Windows OAuth Note
-
-If Peugeot OAuth opens `mymap://...` and desktop browser cannot continue, register the Windows protocol bridge:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\register-mymap-protocol.ps1
-```
+This project is a community reimplementation of the Stellantis connected-car app.
+See [`LICENSE`](LICENSE) for the original project's license terms. The Flutter rewrite
+inherits the same license.
