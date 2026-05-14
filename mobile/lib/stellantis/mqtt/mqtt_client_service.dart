@@ -8,6 +8,7 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
 import 'package:stellantis_mobile/stellantis/mqtt/mqtt_request.dart';
+import 'package:stellantis_mobile/stellantis/mqtt/remote_command.dart';
 import 'package:stellantis_mobile/stellantis/mqtt/remote_credentials.dart';
 import 'package:stellantis_mobile/stellantis/network/psa_http_client.dart';
 import 'package:stellantis_mobile/stellantis/otp/otp_service.dart';
@@ -262,6 +263,22 @@ class MqttClientService {
         minute: 0,
         chargeType: now ? 'immediate' : 'delayed',
       );
+
+  /// Dispatches [command] to the appropriate service method.
+  Future<void> sendCommand(RemoteCommand command) => switch (command) {
+        HornCommand(:final vin) => horn(vin),
+        LightsCommand(:final vin) => lights(vin),
+        WakeupCommand(:final vin) => wakeup(vin),
+        LockCommand(:final vin) => lockDoor(vin, lock: true),
+        UnlockCommand(:final vin) => lockDoor(vin, lock: false),
+        ClimateOnCommand(:final vin) => preconditioning(vin, activate: true),
+        ClimateOffCommand(:final vin) =>
+          preconditioning(vin, activate: false),
+        ChargeOnCommand(:final vin) => chargeNow(vin, now: true),
+        ChargeOffCommand(:final vin) => chargeNow(vin, now: false),
+        SetChargeScheduleCommand(:final vin, :final hour, :final minute) =>
+          changeChargeHour(vin, hour: hour, minute: minute),
+      };
 
   Future<void> changeChargeHour(
     String vin, {
