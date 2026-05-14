@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
+
+/// Provides the active [BrandTheme]. Defaults to [BrandTheme.neutral] until
+/// Phase 4 wires real per-brand themes.
+final brandThemeProvider = StateProvider<BrandTheme>(
+  (_) => BrandTheme.neutral,
+);
 
 /// Immutable set of design tokens for one Stellantis brand.
 /// Populated per-brand in Phase 4. Until then, every brand
