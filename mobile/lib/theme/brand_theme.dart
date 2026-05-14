@@ -55,6 +55,10 @@ class BrandTheme {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Placeholder palettes — replaced with brand-accurate tokens in Phase 4.
+  // ---------------------------------------------------------------------------
+
   static const BrandTheme neutral = BrandTheme(
     brand: Brand.peugeot,
     primary: Color(0xFF1A1A2E),
@@ -65,4 +69,67 @@ class BrandTheme {
     logoAsset: 'assets/brands/stellantis.svg',
     displayFont: 'Inter',
   );
+
+  static const BrandTheme peugeot = BrandTheme(
+    brand: Brand.peugeot,
+    primary: Color(0xFF2D2D2D),
+    onPrimary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF2D2D2D),
+    background: Color(0xFFF5F5F5),
+    logoAsset: 'assets/brands/peugeot.svg',
+    displayFont: 'Inter',
+  );
+
+  static const BrandTheme citroen = BrandTheme(
+    brand: Brand.citroen,
+    primary: Color(0xFF8B1A1A),
+    onPrimary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF5F5F5),
+    logoAsset: 'assets/brands/citroen.svg',
+    displayFont: 'Inter',
+  );
+
+  static const BrandTheme ds = BrandTheme(
+    brand: Brand.ds,
+    primary: Color(0xFF1A1A2E),
+    onPrimary: Color(0xFFD4AF37),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A2E),
+    background: Color(0xFFF0EFE9),
+    logoAsset: 'assets/brands/ds.svg',
+    displayFont: 'Inter',
+  );
+
+  static const BrandTheme opel = BrandTheme(
+    brand: Brand.opel,
+    primary: Color(0xFFFFD700),
+    onPrimary: Color(0xFF1A1A1A),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF5F5F5),
+    logoAsset: 'assets/brands/opel.svg',
+    displayFont: 'Inter',
+  );
+
+  static const BrandTheme vauxhall = BrandTheme(
+    brand: Brand.vauxhall,
+    primary: Color(0xFFC8102E),
+    onPrimary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF5F5F5),
+    logoAsset: 'assets/brands/vauxhall.svg',
+    displayFont: 'Inter',
+  );
+
+  static const Map<Brand, BrandTheme> perBrand = {
+    Brand.citroen: citroen,
+    Brand.ds: ds,
+    Brand.opel: opel,
+    Brand.peugeot: peugeot,
+    Brand.vauxhall: vauxhall,
+  };
 }
