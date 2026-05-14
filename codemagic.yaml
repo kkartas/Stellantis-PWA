@@ -1,0 +1,56 @@
+workflows:
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      android_signing:
+        - stellantis_keystore     # defined in Codemagic app settings
+      vars:
+        PACKAGE_NAME: com.stellantis.app
+    scripts:
+      - name: Get dependencies
+        script: cd mobile && flutter pub get
+      - name: Analyze
+        script: cd mobile && flutter analyze
+      - name: Run tests
+        script: cd mobile && flutter test
+      - name: Build APK
+        script: cd mobile && flutter build apk --release
+    artifacts:
+      - mobile/build/app/outputs/flutter-apk/*.apk
+    publishing:
+      firebase:
+        firebase_token: $FIREBASE_TOKEN
+        android:
+          app_id: $FIREBASE_ANDROID_APP_ID
+          groups:
+            - internal-testers
+
+  ios-release:
+    name: iOS Release
+    max_build_duration: 90
+    environment:
+      flutter: stable
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.stellantis.app
+      vars:
+        BUNDLE_ID: com.stellantis.app
+    scripts:
+      - name: Get dependencies
+        script: cd mobile && flutter pub get
+      - name: Analyze
+        script: cd mobile && flutter analyze
+      - name: Run tests
+        script: cd mobile && flutter test
+      - name: Build IPA
+        script: cd mobile && flutter build ipa --release
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
