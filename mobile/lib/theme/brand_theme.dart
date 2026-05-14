@@ -186,11 +186,20 @@ class BrandTheme {
 
   static const BrandTheme peugeot = BrandTheme(
     brand: Brand.peugeot,
-    primary: Color(0xFF2D2D2D),
+    primary: Color(0xFF1A1A1A),
     onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFFB8962E),
+    onSecondary: Color(0xFF1A1A1A),
+    tertiary: Color(0xFF767676),
+    onTertiary: Color(0xFFFFFFFF),
     surface: Color(0xFFFFFFFF),
-    onSurface: Color(0xFF2D2D2D),
-    background: Color(0xFFF5F5F5),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF2F2F2),
+    darkPrimary: Color(0xFFE0E0E0),
+    darkOnPrimary: Color(0xFF1A1A1A),
+    darkSurface: Color(0xFF1E1E1E),
+    darkOnSurface: Color(0xFFE0E0E0),
+    darkBackground: Color(0xFF121212),
     logoAsset: 'assets/brands/peugeot.svg',
     displayFont: 'Inter',
   );
