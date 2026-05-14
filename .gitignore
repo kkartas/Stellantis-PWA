@@ -152,3 +152,15 @@ certs/
 *.log.*
 
 .vscode/
+.psacc_cache/
+*.apk.bz2
+info.db-*
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+
+# Legacy state files — contain real credentials/personal data
+docs/legacy/sample_data/*
+!docs/legacy/sample_data/README.md
