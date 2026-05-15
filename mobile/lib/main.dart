@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/app/app.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
@@ -16,6 +17,22 @@ final DateTime appStartWallClock = DateTime.now();
 void main() {
   final stopwatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Edge-to-edge: let the brand gradient and map tiles flow under the
+  // status bar and nav-bar. Per-screen Scaffold + SafeArea handling
+  // protects content from being occluded.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      // statusBarIconBrightness flips dynamically per-screen via
+      // AppBarTheme.systemOverlayStyle; this is the safe default.
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
 
   const log = AppLogger('main');
 

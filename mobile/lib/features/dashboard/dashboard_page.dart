@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/core/perf/prefetcher.dart';
@@ -61,8 +62,14 @@ class DashboardPage extends ConsumerWidget {
     final charging = status?.chargingStatus == 'inProgress';
 
     return Scaffold(
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('Dashboard'),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
