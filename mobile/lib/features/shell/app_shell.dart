@@ -158,6 +158,14 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/account'),
           ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About & diagnostics'),
+            subtitle:
+                const Text('Version, last refresh, cache size, copy logs'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/about'),
+          ),
         ],
       ),
     );

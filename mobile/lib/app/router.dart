@@ -9,6 +9,7 @@ import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
 import 'package:stellantis_mobile/features/shell/app_shell.dart';
 import 'package:stellantis_mobile/features/maintenance/maintenance_page.dart';
 import 'package:stellantis_mobile/features/settings/abrp_settings_page.dart';
+import 'package:stellantis_mobile/features/settings/about_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/account_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/charging_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/openweather_settings_page.dart';
@@ -152,6 +153,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'account',
                     builder: (context, state) =>
                         const AccountSettingsPage(),
+                  ),
+                  GoRoute(
+                    path: 'about',
+                    builder: (context, state) => const AboutSettingsPage(),
                   ),
                 ],
               ),
