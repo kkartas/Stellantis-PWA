@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
+import 'package:stellantis_mobile/main.dart' show appStartWallClock;
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/theme/brand_detector.dart';
@@ -23,9 +24,14 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _decide() async {
-    // Minimum splash dwell — keeps the brand logo visible long enough to feel
-    // intentional even on cold start.
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    // Minimum splash dwell so the brand logo feels intentional, but only
+    // top up to the floor if we got here quickly. Warm starts where the
+    // process was already alive paint the brand briefly and move on.
+    const minDwell = Duration(milliseconds: 500);
+    final elapsed = DateTime.now().difference(appStartWallClock);
+    if (elapsed < minDwell) {
+      await Future<void>.delayed(minDwell - elapsed);
+    }
 
     final session = await ref.read(brandSessionStoreProvider).load();
     if (!mounted) return;
