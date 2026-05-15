@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:stellantis_mobile/core/ui/glass_card.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
@@ -117,40 +118,38 @@ class _AddressCard extends StatelessWidget {
     final lng = status.longitude as double?;
     final ts = status.timestamp as DateTime?;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(
-              Icons.directions_car,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Icon(
+            Icons.directions_car,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Last known location',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${lat?.toStringAsFixed(5)}, ${lng?.toStringAsFixed(5)}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (ts != null)
                   Text(
-                    'Last known location',
-                    style: Theme.of(context).textTheme.titleSmall,
+                    _formatTimestamp(ts),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${lat?.toStringAsFixed(5)}, ${lng?.toStringAsFixed(5)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (ts != null)
-                    Text(
-                      _formatTimestamp(ts),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
