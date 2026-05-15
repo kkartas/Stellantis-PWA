@@ -433,6 +433,27 @@ class BrandTheme {
     fastCurve: Curves.easeOutCubic,
   );
 
+  static const BrandTheme ram = BrandTheme(
+    brand: Brand.ram,
+    primary: Color(0xFFB32024),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFF1A1A1A),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFF6B6B6B),
+    onTertiary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFEFEDE9),
+    darkPrimary: Color(0xFFD8383D),
+    darkOnPrimary: Color(0xFFFFFFFF),
+    darkSurface: Color(0xFF1E1A1A),
+    darkOnSurface: Color(0xFFF0EDE7),
+    darkBackground: Color(0xFF0F0B0B),
+    logoAsset: 'assets/brands/ram.svg',
+    displayFont: 'Inter',
+    slowDuration: Duration(milliseconds: 380),
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.alfaRomeo: alfaRomeo,
     Brand.chrysler: chrysler,
@@ -445,6 +466,7 @@ class BrandTheme {
     Brand.maserati: maserati,
     Brand.opel: opel,
     Brand.peugeot: peugeot,
+    Brand.ram: ram,
     Brand.vauxhall: vauxhall,
   };
 }
