@@ -7,6 +7,7 @@ import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
 import 'package:stellantis_mobile/features/shell/app_shell.dart';
+import 'package:stellantis_mobile/features/trips/trips_page.dart';
 import 'package:stellantis_mobile/features/vehicle_detail/location_page.dart';
 import 'package:stellantis_mobile/features/vehicle_detail/vehicle_detail_page.dart';
 import 'package:stellantis_mobile/features/vehicles/vehicle_picker_page.dart';
@@ -65,6 +66,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/trips',
                 builder: (context, state) => const TripsPage(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = int.tryParse(state.pathParameters['id'] ?? '');
+                      return _TripDetailPlaceholder(tripId: id);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -97,3 +107,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class _TripDetailPlaceholder extends StatelessWidget {
+  const _TripDetailPlaceholder({required this.tripId});
+  final int? tripId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Trip ${tripId ?? ''}')),
+      body: const Center(child: Text('Trip detail (6.6)')),
+    );
+  }
+}
