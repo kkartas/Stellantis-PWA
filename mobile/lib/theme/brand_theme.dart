@@ -247,11 +247,20 @@ class BrandTheme {
 
   static const BrandTheme opel = BrandTheme(
     brand: Brand.opel,
-    primary: Color(0xFFFFD700),
+    primary: Color(0xFFF4C22B),
     onPrimary: Color(0xFF1A1A1A),
+    secondary: Color(0xFF1A1A1A),
+    onSecondary: Color(0xFFF4C22B),
+    tertiary: Color(0xFFEAEAEA),
+    onTertiary: Color(0xFF1A1A1A),
     surface: Color(0xFFFFFFFF),
     onSurface: Color(0xFF1A1A1A),
     background: Color(0xFFF5F5F5),
+    darkPrimary: Color(0xFFF4C22B),
+    darkOnPrimary: Color(0xFF1A1A1A),
+    darkSurface: Color(0xFF1E1E1E),
+    darkOnSurface: Color(0xFFF4C22B),
+    darkBackground: Color(0xFF0D0D0D),
     logoAsset: 'assets/brands/opel.svg',
     displayFont: 'Inter',
   );
