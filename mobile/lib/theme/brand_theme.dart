@@ -306,10 +306,32 @@ class BrandTheme {
     fastDuration: Duration(milliseconds: 180),
   );
 
+  static const BrandTheme lancia = BrandTheme(
+    brand: Brand.lancia,
+    primary: Color(0xFF003399),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFFCC0000),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFFB8B8B8),
+    onTertiary: Color(0xFF1A1A1A),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF003399),
+    background: Color(0xFFF0F0F8),
+    darkPrimary: Color(0xFF6B8FFF),
+    darkOnPrimary: Color(0xFF0A1438),
+    darkSurface: Color(0xFF1A1F33),
+    darkOnSurface: Color(0xFFE0E0E8),
+    darkBackground: Color(0xFF0A0F1F),
+    logoAsset: 'assets/brands/lancia.svg',
+    displayFont: 'Inter',
+    slowDuration: Duration(milliseconds: 420),
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.citroen: citroen,
     Brand.ds: ds,
     Brand.fiat: fiat,
+    Brand.lancia: lancia,
     Brand.opel: opel,
     Brand.peugeot: peugeot,
     Brand.vauxhall: vauxhall,
