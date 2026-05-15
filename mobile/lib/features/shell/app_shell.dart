@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/data/session_service.dart';
-import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
 
 /// Top-level navigation shell. Renders a [NavigationBar] on Android and a
 /// [CupertinoTabBar] on iOS so the destination switcher matches platform
@@ -102,40 +101,6 @@ class _ShellDestination {
 
 /// Placeholder pages — replaced one-by-one in Phase 6.
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: WakeRefreshIndicator(
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Dashboard',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.refresh),
-                title: Text('Pull down to wake the car and refresh telemetry'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class TripsPage extends StatelessWidget {
   const TripsPage({super.key});
