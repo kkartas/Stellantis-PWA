@@ -140,6 +140,13 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/abrp'),
           ),
+          ListTile(
+            leading: const Icon(Icons.wb_sunny_outlined),
+            title: const Text('OpenWeather'),
+            subtitle: const Text('Ambient temperature fallback'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/openweather'),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(

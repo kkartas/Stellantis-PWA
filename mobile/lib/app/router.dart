@@ -10,6 +10,7 @@ import 'package:stellantis_mobile/features/shell/app_shell.dart';
 import 'package:stellantis_mobile/features/maintenance/maintenance_page.dart';
 import 'package:stellantis_mobile/features/settings/abrp_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/charging_settings_page.dart';
+import 'package:stellantis_mobile/features/settings/openweather_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/units_settings_page.dart';
 import 'package:stellantis_mobile/features/stats/stats_page.dart';
 import 'package:stellantis_mobile/features/charging/charging_detail_page.dart';
@@ -135,6 +136,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'abrp',
                     builder: (context, state) => const AbrpSettingsPage(),
+                  ),
+                  GoRoute(
+                    path: 'openweather',
+                    builder: (context, state) =>
+                        const OpenWeatherSettingsPage(),
                   ),
                 ],
               ),
