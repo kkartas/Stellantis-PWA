@@ -5,6 +5,7 @@ import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
 import 'package:stellantis_mobile/features/auth/login_page.dart';
 import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
+import 'package:stellantis_mobile/features/vehicles/vehicle_picker_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -28,7 +29,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/vehicle-picker',
-        builder: (context, state) => const _VehiclePickerPlaceholderPage(),
+        builder: (context, state) => const VehiclePickerPage(),
       ),
       GoRoute(
         path: '/',
@@ -49,13 +50,3 @@ class DashboardPlaceholderPage extends StatelessWidget {
   }
 }
 
-class _VehiclePickerPlaceholderPage extends StatelessWidget {
-  const _VehiclePickerPlaceholderPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Vehicle picker (placeholder)')),
-    );
-  }
-}

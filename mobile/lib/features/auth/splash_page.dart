@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
+import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/theme/brand_detector.dart';
 import 'package:stellantis_mobile/theme/brand_theme.dart';
@@ -47,6 +48,15 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       return;
     }
 
+    final vin = await ref.read(selectedVehicleStoreProvider).load();
+    if (!mounted) return;
+
+    if (vin == null) {
+      context.go('/vehicle-picker');
+      return;
+    }
+
+    ref.read(selectedVinProvider.notifier).state = vin;
     context.go('/');
   }
 
