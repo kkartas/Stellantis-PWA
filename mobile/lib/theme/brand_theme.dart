@@ -370,6 +370,27 @@ class BrandTheme {
     slowDuration: Duration(milliseconds: 400),
   );
 
+  static const BrandTheme maserati = BrandTheme(
+    brand: Brand.maserati,
+    primary: Color(0xFF00205B),
+    onPrimary: Color(0xFFD4AF37),
+    secondary: Color(0xFFD4AF37),
+    onSecondary: Color(0xFF00205B),
+    tertiary: Color(0xFF8B8B8B),
+    onTertiary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF00205B),
+    background: Color(0xFFF0EFE9),
+    darkPrimary: Color(0xFFD4AF37),
+    darkOnPrimary: Color(0xFF00102E),
+    darkSurface: Color(0xFF14203A),
+    darkOnSurface: Color(0xFFE0DFC9),
+    darkBackground: Color(0xFF050D24),
+    logoAsset: 'assets/brands/maserati.svg',
+    displayFont: 'Inter',
+    slowDuration: Duration(milliseconds: 470),
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.alfaRomeo: alfaRomeo,
     Brand.citroen: citroen,
@@ -377,6 +398,7 @@ class BrandTheme {
     Brand.fiat: fiat,
     Brand.jeep: jeep,
     Brand.lancia: lancia,
+    Brand.maserati: maserati,
     Brand.opel: opel,
     Brand.peugeot: peugeot,
     Brand.vauxhall: vauxhall,
