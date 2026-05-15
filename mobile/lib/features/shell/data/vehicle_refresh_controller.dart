@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
+import 'package:stellantis_mobile/features/vehicle_detail/data/live_status.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
@@ -64,6 +65,12 @@ class VehicleRefreshController {
 
     final repo = await _ref.read(statusRepoProvider.future);
     await repo.save(_toSnapshot(vin, status));
+
+    // Update the in-memory full-status cache so the vehicle-detail screen
+    // can render rich fields (doors, AC) without another network call.
+    final live = _ref.read(liveVehicleStatusProvider.notifier);
+    live.state = {...live.state, vin: status};
+
     _log.i('Refreshed status snapshot for VIN $vin');
   }
 

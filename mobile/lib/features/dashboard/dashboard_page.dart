@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/dashboard/data/quick_action_controller.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/battery_ring.dart';
@@ -72,7 +73,10 @@ class DashboardPage extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            HeroCard(vehicle: vehicle, status: status),
+            GestureDetector(
+              onTap: () => context.go('/vehicle'),
+              child: HeroCard(vehicle: vehicle, status: status),
+            ),
             const SizedBox(height: 20),
             _EnergyRings(
               electricLevel: electricLevel,
