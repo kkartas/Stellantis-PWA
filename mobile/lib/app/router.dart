@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
 import 'package:stellantis_mobile/features/auth/login_page.dart';
+import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -23,7 +24,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/otp-setup',
-        builder: (context, state) => const _OtpSetupPlaceholderPage(),
+        builder: (context, state) => const OtpSetupPage(),
+      ),
+      GoRoute(
+        path: '/vehicle-picker',
+        builder: (context, state) => const _VehiclePickerPlaceholderPage(),
       ),
       GoRoute(
         path: '/',
@@ -44,13 +49,13 @@ class DashboardPlaceholderPage extends StatelessWidget {
   }
 }
 
-class _OtpSetupPlaceholderPage extends StatelessWidget {
-  const _OtpSetupPlaceholderPage();
+class _VehiclePickerPlaceholderPage extends StatelessWidget {
+  const _VehiclePickerPlaceholderPage();
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('OTP setup (placeholder)')),
+      body: Center(child: Text('Vehicle picker (placeholder)')),
     );
   }
 }
