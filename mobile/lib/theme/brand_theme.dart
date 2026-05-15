@@ -327,7 +327,30 @@ class BrandTheme {
     slowDuration: Duration(milliseconds: 420),
   );
 
+  static const BrandTheme alfaRomeo = BrandTheme(
+    brand: Brand.alfaRomeo,
+    primary: Color(0xFFCC0000),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFF003087),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFF2D2D2D),
+    onTertiary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF8F4F2),
+    darkPrimary: Color(0xFFE83535),
+    darkOnPrimary: Color(0xFFFFFFFF),
+    darkSurface: Color(0xFF1E1A1A),
+    darkOnSurface: Color(0xFFF5F0EE),
+    darkBackground: Color(0xFF120E0E),
+    logoAsset: 'assets/brands/alfaromeo.svg',
+    displayFont: 'Inter',
+    fastDuration: Duration(milliseconds: 170),
+    fastCurve: Curves.easeOutCubic,
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
+    Brand.alfaRomeo: alfaRomeo,
     Brand.citroen: citroen,
     Brand.ds: ds,
     Brand.fiat: fiat,
