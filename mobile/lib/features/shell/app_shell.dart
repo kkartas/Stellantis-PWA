@@ -123,6 +123,13 @@ class SettingsPage extends ConsumerWidget {
             subtitle: Text('Target SOC, schedule, kWh price (Phase 6)'),
             enabled: false,
           ),
+          ListTile(
+            leading: const Icon(Icons.build_outlined),
+            title: const Text('Maintenance'),
+            subtitle: const Text('Oil, brakes, service reminders'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/maintenance'),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(
