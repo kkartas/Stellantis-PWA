@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:stellantis_mobile/features/dashboard/widgets/hero_car_rive.dart';
 import 'package:stellantis_mobile/stellantis/storage/schemas/status_snapshot.dart';
 import 'package:stellantis_mobile/stellantis/storage/schemas/vehicle_record.dart';
 import 'package:stellantis_mobile/theme/brand_theme.dart';
@@ -46,18 +46,15 @@ class HeroCard extends ConsumerWidget {
       ),
       child: Stack(
         children: [
-          // Brand logo silhouette, faded into the gradient.
+          // Rive car (with SVG silhouette fallback while no .riv ships).
           Positioned(
-            right: -20,
-            bottom: -20,
+            right: -10,
+            bottom: -10,
+            width: 200,
+            height: 180,
             child: Opacity(
-              opacity: 0.15,
-              child: SvgPicture.asset(
-                brand.logoAsset,
-                height: 180,
-                colorFilter:
-                    ColorFilter.mode(brand.onPrimary, BlendMode.srcIn),
-              ),
+              opacity: 0.55,
+              child: HeroCarRive(status: status, height: 180),
             ),
           ),
           Padding(
