@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
+import 'package:stellantis_mobile/core/ui/haptics.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/mqtt/mqtt_client_service.dart';
@@ -78,6 +81,7 @@ class QuickActionController extends Notifier<QuickActionState> {
       pending: {...state.pending, action},
       clearLastResult: true,
     );
+    unawaited(Haptics.tap());
 
     final mqtt = ref.read(mqttClientServiceProvider);
     final command = _toCommand(action, vin);
@@ -90,6 +94,7 @@ class QuickActionController extends Notifier<QuickActionState> {
         lastResult: QuickActionStatus.success,
         lastAction: action,
       );
+      unawaited(Haptics.success());
     } catch (e, st) {
       _log.e('$action failed', e, st);
       state = state.copyWith(
@@ -98,6 +103,7 @@ class QuickActionController extends Notifier<QuickActionState> {
         lastAction: action,
         lastError: e.toString(),
       );
+      unawaited(Haptics.failure());
     }
   }
 

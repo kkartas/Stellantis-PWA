@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stellantis_mobile/core/ui/haptics.dart';
 import 'package:stellantis_mobile/features/shell/data/vehicle_refresh_controller.dart';
 
 /// Pull-to-refresh affordance that wakes the car (MQTT) and re-fetches its
@@ -15,9 +16,10 @@ class WakeRefreshIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return RefreshIndicator(
-      onRefresh: () => ref
-          .read(vehicleRefreshControllerProvider)
-          .wakeAndRefresh(),
+      onRefresh: () async {
+        await Haptics.refresh();
+        await ref.read(vehicleRefreshControllerProvider).wakeAndRefresh();
+      },
       child: child,
     );
   }
