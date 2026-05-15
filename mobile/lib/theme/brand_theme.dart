@@ -349,11 +349,33 @@ class BrandTheme {
     fastCurve: Curves.easeOutCubic,
   );
 
+  static const BrandTheme jeep = BrandTheme(
+    brand: Brand.jeep,
+    primary: Color(0xFF1F4A2E),
+    onPrimary: Color(0xFFF5F1E8),
+    secondary: Color(0xFF8B6F47),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFFC0BC9E),
+    onTertiary: Color(0xFF1A1A1A),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1F2A20),
+    background: Color(0xFFF2EFE6),
+    darkPrimary: Color(0xFF5A8A6A),
+    darkOnPrimary: Color(0xFF0F1A12),
+    darkSurface: Color(0xFF1E2520),
+    darkOnSurface: Color(0xFFE8E2D6),
+    darkBackground: Color(0xFF0F140F),
+    logoAsset: 'assets/brands/jeep.svg',
+    displayFont: 'Inter',
+    slowDuration: Duration(milliseconds: 400),
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.alfaRomeo: alfaRomeo,
     Brand.citroen: citroen,
     Brand.ds: ds,
     Brand.fiat: fiat,
+    Brand.jeep: jeep,
     Brand.lancia: lancia,
     Brand.opel: opel,
     Brand.peugeot: peugeot,
