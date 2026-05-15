@@ -391,8 +391,29 @@ class BrandTheme {
     slowDuration: Duration(milliseconds: 470),
   );
 
+  static const BrandTheme chrysler = BrandTheme(
+    brand: Brand.chrysler,
+    primary: Color(0xFF1C1C1C),
+    onPrimary: Color(0xFFC5A028),
+    secondary: Color(0xFFC5A028),
+    onSecondary: Color(0xFF1C1C1C),
+    tertiary: Color(0xFF8B8B8B),
+    onTertiary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1C1C1C),
+    background: Color(0xFFF4F2EE),
+    darkPrimary: Color(0xFFC5A028),
+    darkOnPrimary: Color(0xFF141414),
+    darkSurface: Color(0xFF1E1E1E),
+    darkOnSurface: Color(0xFFE0D9B8),
+    darkBackground: Color(0xFF0D0D0D),
+    logoAsset: 'assets/brands/chrysler.svg',
+    displayFont: 'Inter',
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.alfaRomeo: alfaRomeo,
+    Brand.chrysler: chrysler,
     Brand.citroen: citroen,
     Brand.ds: ds,
     Brand.fiat: fiat,
