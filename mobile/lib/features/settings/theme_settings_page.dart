@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:stellantis_mobile/features/settings/data/theme_mode_preference.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
 import 'package:stellantis_mobile/theme/brand_detector.dart';
 import 'package:stellantis_mobile/theme/brand_theme.dart';
@@ -11,6 +12,8 @@ class ThemeSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final override = ref.watch(brandOverrideProvider);
+    final themeMode =
+        ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.system;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Theme')),
@@ -19,10 +22,51 @@ class ThemeSettingsPage extends ConsumerWidget {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              'By default the app themes itself to match the brand of the '
-              'car on your account. Pick a different brand below to force '
-              'that theme instead.',
+              'Appearance and brand identity. Light / dark applies to the '
+              'whole app; the brand below tints the palette.',
             ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text('Appearance', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          RadioListTile<ThemeMode>(
+            value: ThemeMode.system,
+            groupValue: themeMode,
+            title: const Text('Match system'),
+            secondary: const Icon(Icons.brightness_auto),
+            onChanged: (v) => v == null
+                ? null
+                : ref
+                    .read(themeModeControllerProvider.notifier)
+                    .set(v),
+          ),
+          RadioListTile<ThemeMode>(
+            value: ThemeMode.light,
+            groupValue: themeMode,
+            title: const Text('Light'),
+            secondary: const Icon(Icons.light_mode_outlined),
+            onChanged: (v) => v == null
+                ? null
+                : ref
+                    .read(themeModeControllerProvider.notifier)
+                    .set(v),
+          ),
+          RadioListTile<ThemeMode>(
+            value: ThemeMode.dark,
+            groupValue: themeMode,
+            title: const Text('Dark'),
+            secondary: const Icon(Icons.dark_mode_outlined),
+            onChanged: (v) => v == null
+                ? null
+                : ref
+                    .read(themeModeControllerProvider.notifier)
+                    .set(v),
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text('Brand', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
           RadioListTile<Brand?>(
             value: null,

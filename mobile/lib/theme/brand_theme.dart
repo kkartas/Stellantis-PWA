@@ -138,8 +138,14 @@ class BrandTheme {
         labelLarge: TextStyle(fontFamily: bodyFont ?? displayFont),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: p,
-        foregroundColor: op,
+        // In light mode the AppBar wears the brand primary so the hero
+        // identity carries into the chrome. In dark mode the same primary
+        // can become a glaring saturated band on top of a near-black
+        // surface — defer to the (dark) surface color and rely on the
+        // tinted onSurface text for brand identity instead.
+        backgroundColor: isDark ? sf : p,
+        foregroundColor: isDark ? osf : op,
+        surfaceTintColor: scheme.primary,
         elevation: 0,
         centerTitle: true,
       ),
