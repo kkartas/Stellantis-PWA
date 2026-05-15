@@ -285,9 +285,31 @@ class BrandTheme {
     displayFont: 'Inter',
   );
 
+  static const BrandTheme fiat = BrandTheme(
+    brand: Brand.fiat,
+    primary: Color(0xFFCC0000),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFF1C3F6E),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFFFFC845),
+    onTertiary: Color(0xFF1A1A1A),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFFAF6F0),
+    darkPrimary: Color(0xFFE83535),
+    darkOnPrimary: Color(0xFFFFFFFF),
+    darkSurface: Color(0xFF1E1E1E),
+    darkOnSurface: Color(0xFFF5F5F5),
+    darkBackground: Color(0xFF141414),
+    logoAsset: 'assets/brands/fiat.svg',
+    displayFont: 'Inter',
+    fastDuration: Duration(milliseconds: 180),
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.citroen: citroen,
     Brand.ds: ds,
+    Brand.fiat: fiat,
     Brand.opel: opel,
     Brand.peugeot: peugeot,
     Brand.vauxhall: vauxhall,
