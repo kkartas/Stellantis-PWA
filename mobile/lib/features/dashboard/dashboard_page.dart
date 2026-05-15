@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
+import 'package:stellantis_mobile/features/dashboard/data/quick_action_controller.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/battery_ring.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/hero_card.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/quick_actions_row.dart';
@@ -13,6 +14,41 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statusAsync = ref.watch(latestStatusProvider);
     final vehicleAsync = ref.watch(activeVehicleProvider);
+
+    ref.listen<QuickActionState>(quickActionControllerProvider,
+        (prev, next) {
+      final result = next.lastResult;
+      final action = next.lastAction;
+      if (result == null || action == null) return;
+      if (prev?.lastResult == result && prev?.lastAction == action) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result == QuickActionStatus.success
+                ? '${action.label} sent to your car'
+                : '${action.label} failed. Tap to retry.',
+          ),
+          backgroundColor: result == QuickActionStatus.failure
+              ? Theme.of(context).colorScheme.error
+              : null,
+          action: result == QuickActionStatus.failure
+              ? SnackBarAction(
+                  label: 'Retry',
+                  textColor: Theme.of(context).colorScheme.onError,
+                  onPressed: () => ref
+                      .read(quickActionControllerProvider.notifier)
+                      .dispatch(action),
+                )
+              : null,
+        ),
+      );
+      ref
+          .read(quickActionControllerProvider.notifier)
+          .acknowledgeLastResult();
+    });
 
     final status = statusAsync.valueOrNull;
     final vehicle = vehicleAsync.valueOrNull;
