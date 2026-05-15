@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
+import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
@@ -48,18 +49,18 @@ class VehiclePickerPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Choose your vehicle')),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => _ErrorView(
-          message: 'Could not load vehicles. Pull to retry.',
+        loading: () => const LoadingStateView(message: 'Loading vehicles...'),
+        error: (e, st) => mapErrorToStateView(
+          e,
           onRetry: () => ref.invalidate(_fetchedVehiclesProvider),
         ),
         data: (vehicles) {
           if (vehicles.isEmpty) {
-            return _ErrorView(
+            return const EmptyStateView(
+              icon: Icons.directions_car_outlined,
               message:
                   'No vehicles were returned for this account. Make sure '
                   'your car is paired in the official app.',
-              onRetry: () => ref.invalidate(_fetchedVehiclesProvider),
             );
           }
 
@@ -114,31 +115,3 @@ class VehiclePickerPage extends ConsumerWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.car_crash_outlined, size: 56),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
