@@ -7,6 +7,7 @@ import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
 import 'package:stellantis_mobile/features/shell/app_shell.dart';
+import 'package:stellantis_mobile/features/stats/stats_page.dart';
 import 'package:stellantis_mobile/features/charging/charging_detail_page.dart';
 import 'package:stellantis_mobile/features/charging/charging_page.dart';
 import 'package:stellantis_mobile/features/trips/trip_detail_page.dart';
