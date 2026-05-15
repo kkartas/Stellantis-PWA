@@ -77,8 +77,7 @@ mixin VehicleModelMappable {
   }
 
   VehicleModelCopyWith<VehicleModel, VehicleModel, VehicleModel> get copyWith =>
-      _VehicleModelCopyWithImpl<VehicleModel, VehicleModel>(
-          this as VehicleModel, $identity, $identity);
+      _VehicleModelCopyWithImpl(this as VehicleModel, $identity, $identity);
   @override
   String toString() {
     return VehicleModelMapper.ensureInitialized()
@@ -101,7 +100,7 @@ mixin VehicleModelMappable {
 extension VehicleModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VehicleModel, $Out> {
   VehicleModelCopyWith<$R, VehicleModel, $Out> get $asVehicleModel =>
-      $base.as((v, t, t2) => _VehicleModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _VehicleModelCopyWithImpl(v, t, t2));
 }
 
 abstract class VehicleModelCopyWith<$R, $In extends VehicleModel, $Out>
@@ -157,7 +156,7 @@ class _VehicleModelCopyWithImpl<$R, $Out>
   @override
   VehicleModelCopyWith<$R2, VehicleModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VehicleModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _VehicleModelCopyWithImpl($value, $cast, t);
 }
 
 class VehiclesResponseMapper extends ClassMapperBase<VehiclesResponse> {
@@ -212,9 +211,8 @@ mixin VehiclesResponseMappable {
   }
 
   VehiclesResponseCopyWith<VehiclesResponse, VehiclesResponse, VehiclesResponse>
-      get copyWith =>
-          _VehiclesResponseCopyWithImpl<VehiclesResponse, VehiclesResponse>(
-              this as VehiclesResponse, $identity, $identity);
+      get copyWith => _VehiclesResponseCopyWithImpl(
+          this as VehiclesResponse, $identity, $identity);
   @override
   String toString() {
     return VehiclesResponseMapper.ensureInitialized()
@@ -237,8 +235,8 @@ mixin VehiclesResponseMappable {
 extension VehiclesResponseValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VehiclesResponse, $Out> {
   VehiclesResponseCopyWith<$R, VehiclesResponse, $Out>
-      get $asVehiclesResponse => $base
-          .as((v, t, t2) => _VehiclesResponseCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asVehiclesResponse =>
+          $base.as((v, t, t2) => _VehiclesResponseCopyWithImpl(v, t, t2));
 }
 
 abstract class VehiclesResponseCopyWith<$R, $In extends VehiclesResponse, $Out>
@@ -272,7 +270,7 @@ class _VehiclesResponseCopyWithImpl<$R, $Out>
   @override
   VehiclesResponseCopyWith<$R2, VehiclesResponse, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VehiclesResponseCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _VehiclesResponseCopyWithImpl($value, $cast, t);
 }
 
 class VehiclesEmbeddedMapper extends ClassMapperBase<VehiclesEmbedded> {
@@ -327,9 +325,8 @@ mixin VehiclesEmbeddedMappable {
   }
 
   VehiclesEmbeddedCopyWith<VehiclesEmbedded, VehiclesEmbedded, VehiclesEmbedded>
-      get copyWith =>
-          _VehiclesEmbeddedCopyWithImpl<VehiclesEmbedded, VehiclesEmbedded>(
-              this as VehiclesEmbedded, $identity, $identity);
+      get copyWith => _VehiclesEmbeddedCopyWithImpl(
+          this as VehiclesEmbedded, $identity, $identity);
   @override
   String toString() {
     return VehiclesEmbeddedMapper.ensureInitialized()
@@ -352,8 +349,8 @@ mixin VehiclesEmbeddedMappable {
 extension VehiclesEmbeddedValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VehiclesEmbedded, $Out> {
   VehiclesEmbeddedCopyWith<$R, VehiclesEmbedded, $Out>
-      get $asVehiclesEmbedded => $base
-          .as((v, t, t2) => _VehiclesEmbeddedCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asVehiclesEmbedded =>
+          $base.as((v, t, t2) => _VehiclesEmbeddedCopyWithImpl(v, t, t2));
 }
 
 abstract class VehiclesEmbeddedCopyWith<$R, $In extends VehiclesEmbedded, $Out>
@@ -390,5 +387,5 @@ class _VehiclesEmbeddedCopyWithImpl<$R, $Out>
   @override
   VehiclesEmbeddedCopyWith<$R2, VehiclesEmbedded, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VehiclesEmbeddedCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _VehiclesEmbeddedCopyWithImpl($value, $cast, t);
 }

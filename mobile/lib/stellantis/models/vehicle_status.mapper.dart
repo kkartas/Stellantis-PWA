@@ -31,7 +31,7 @@ class IgnitionTypeMapper extends EnumMapper<IgnitionType> {
         return IgnitionType.stop;
       case 'Free':
         return IgnitionType.free;
-      case r'unknown':
+      case 'unknown':
         return IgnitionType.unknown;
       default:
         return IgnitionType.values[3];
@@ -48,7 +48,7 @@ class IgnitionTypeMapper extends EnumMapper<IgnitionType> {
       case IgnitionType.free:
         return 'Free';
       case IgnitionType.unknown:
-        return r'unknown';
+        return 'unknown';
     }
   }
 }
@@ -85,7 +85,7 @@ class DoorLockStatusMapper extends EnumMapper<DoorLockStatus> {
         return DoorLockStatus.unlocked;
       case 'SuperLocked':
         return DoorLockStatus.superLocked;
-      case r'unknown':
+      case 'unknown':
         return DoorLockStatus.unknown;
       default:
         return DoorLockStatus.values[3];
@@ -102,7 +102,7 @@ class DoorLockStatusMapper extends EnumMapper<DoorLockStatus> {
       case DoorLockStatus.superLocked:
         return 'SuperLocked';
       case DoorLockStatus.unknown:
-        return r'unknown';
+        return 'unknown';
     }
   }
 }
@@ -139,7 +139,7 @@ class AirConditioningStatusMapper extends EnumMapper<AirConditioningStatus> {
         return AirConditioningStatus.disabled;
       case 'Error':
         return AirConditioningStatus.error;
-      case r'unknown':
+      case 'unknown':
         return AirConditioningStatus.unknown;
       default:
         return AirConditioningStatus.values[3];
@@ -156,7 +156,7 @@ class AirConditioningStatusMapper extends EnumMapper<AirConditioningStatus> {
       case AirConditioningStatus.error:
         return 'Error';
       case AirConditioningStatus.unknown:
-        return r'unknown';
+        return 'unknown';
     }
   }
 }
@@ -220,7 +220,7 @@ mixin IgnitionModelMappable {
   }
 
   IgnitionModelCopyWith<IgnitionModel, IgnitionModel, IgnitionModel>
-      get copyWith => _IgnitionModelCopyWithImpl<IgnitionModel, IgnitionModel>(
+      get copyWith => _IgnitionModelCopyWithImpl(
           this as IgnitionModel, $identity, $identity);
   @override
   String toString() {
@@ -244,7 +244,7 @@ mixin IgnitionModelMappable {
 extension IgnitionModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, IgnitionModel, $Out> {
   IgnitionModelCopyWith<$R, IgnitionModel, $Out> get $asIgnitionModel =>
-      $base.as((v, t, t2) => _IgnitionModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _IgnitionModelCopyWithImpl(v, t, t2));
 }
 
 abstract class IgnitionModelCopyWith<$R, $In extends IgnitionModel, $Out>
@@ -271,7 +271,7 @@ class _IgnitionModelCopyWithImpl<$R, $Out>
   @override
   IgnitionModelCopyWith<$R2, IgnitionModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _IgnitionModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _IgnitionModelCopyWithImpl($value, $cast, t);
 }
 
 class KineticModelMapper extends ClassMapperBase<KineticModel> {
@@ -329,8 +329,7 @@ mixin KineticModelMappable {
   }
 
   KineticModelCopyWith<KineticModel, KineticModel, KineticModel> get copyWith =>
-      _KineticModelCopyWithImpl<KineticModel, KineticModel>(
-          this as KineticModel, $identity, $identity);
+      _KineticModelCopyWithImpl(this as KineticModel, $identity, $identity);
   @override
   String toString() {
     return KineticModelMapper.ensureInitialized()
@@ -353,7 +352,7 @@ mixin KineticModelMappable {
 extension KineticModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, KineticModel, $Out> {
   KineticModelCopyWith<$R, KineticModel, $Out> get $asKineticModel =>
-      $base.as((v, t, t2) => _KineticModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _KineticModelCopyWithImpl(v, t, t2));
 }
 
 abstract class KineticModelCopyWith<$R, $In extends KineticModel, $Out>
@@ -384,7 +383,7 @@ class _KineticModelCopyWithImpl<$R, $Out>
   @override
   KineticModelCopyWith<$R2, KineticModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _KineticModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _KineticModelCopyWithImpl($value, $cast, t);
 }
 
 class DoorsStateOpeningMapper extends ClassMapperBase<DoorsStateOpening> {
@@ -470,9 +469,8 @@ mixin DoorsStateOpeningMappable {
 
   DoorsStateOpeningCopyWith<DoorsStateOpening, DoorsStateOpening,
           DoorsStateOpening>
-      get copyWith =>
-          _DoorsStateOpeningCopyWithImpl<DoorsStateOpening, DoorsStateOpening>(
-              this as DoorsStateOpening, $identity, $identity);
+      get copyWith => _DoorsStateOpeningCopyWithImpl(
+          this as DoorsStateOpening, $identity, $identity);
   @override
   String toString() {
     return DoorsStateOpeningMapper.ensureInitialized()
@@ -495,8 +493,8 @@ mixin DoorsStateOpeningMappable {
 extension DoorsStateOpeningValueCopy<$R, $Out>
     on ObjectCopyWith<$R, DoorsStateOpening, $Out> {
   DoorsStateOpeningCopyWith<$R, DoorsStateOpening, $Out>
-      get $asDoorsStateOpening => $base
-          .as((v, t, t2) => _DoorsStateOpeningCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asDoorsStateOpening =>
+          $base.as((v, t, t2) => _DoorsStateOpeningCopyWithImpl(v, t, t2));
 }
 
 abstract class DoorsStateOpeningCopyWith<$R, $In extends DoorsStateOpening,
@@ -552,7 +550,7 @@ class _DoorsStateOpeningCopyWithImpl<$R, $Out>
   @override
   DoorsStateOpeningCopyWith<$R2, DoorsStateOpening, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _DoorsStateOpeningCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _DoorsStateOpeningCopyWithImpl($value, $cast, t);
 }
 
 class DoorsStateModelMapper extends ClassMapperBase<DoorsStateModel> {
@@ -613,9 +611,8 @@ mixin DoorsStateModelMappable {
   }
 
   DoorsStateModelCopyWith<DoorsStateModel, DoorsStateModel, DoorsStateModel>
-      get copyWith =>
-          _DoorsStateModelCopyWithImpl<DoorsStateModel, DoorsStateModel>(
-              this as DoorsStateModel, $identity, $identity);
+      get copyWith => _DoorsStateModelCopyWithImpl(
+          this as DoorsStateModel, $identity, $identity);
   @override
   String toString() {
     return DoorsStateModelMapper.ensureInitialized()
@@ -638,7 +635,7 @@ mixin DoorsStateModelMappable {
 extension DoorsStateModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, DoorsStateModel, $Out> {
   DoorsStateModelCopyWith<$R, DoorsStateModel, $Out> get $asDoorsStateModel =>
-      $base.as((v, t, t2) => _DoorsStateModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _DoorsStateModelCopyWithImpl(v, t, t2));
 }
 
 abstract class DoorsStateModelCopyWith<$R, $In extends DoorsStateModel, $Out>
@@ -675,7 +672,7 @@ class _DoorsStateModelCopyWithImpl<$R, $Out>
   @override
   DoorsStateModelCopyWith<$R2, DoorsStateModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _DoorsStateModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _DoorsStateModelCopyWithImpl($value, $cast, t);
 }
 
 class PreconditioningProgramMapper
@@ -747,8 +744,7 @@ mixin PreconditioningProgramMappable {
 
   PreconditioningProgramCopyWith<PreconditioningProgram, PreconditioningProgram,
           PreconditioningProgram>
-      get copyWith => _PreconditioningProgramCopyWithImpl<
-              PreconditioningProgram, PreconditioningProgram>(
+      get copyWith => _PreconditioningProgramCopyWithImpl(
           this as PreconditioningProgram, $identity, $identity);
   @override
   String toString() {
@@ -772,8 +768,8 @@ mixin PreconditioningProgramMappable {
 extension PreconditioningProgramValueCopy<$R, $Out>
     on ObjectCopyWith<$R, PreconditioningProgram, $Out> {
   PreconditioningProgramCopyWith<$R, PreconditioningProgram, $Out>
-      get $asPreconditioningProgram => $base.as((v, t, t2) =>
-          _PreconditioningProgramCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asPreconditioningProgram =>
+          $base.as((v, t, t2) => _PreconditioningProgramCopyWithImpl(v, t, t2));
 }
 
 abstract class PreconditioningProgramCopyWith<
@@ -825,7 +821,7 @@ class _PreconditioningProgramCopyWithImpl<$R, $Out>
   @override
   PreconditioningProgramCopyWith<$R2, PreconditioningProgram, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _PreconditioningProgramCopyWithImpl<$R2, $Out2>($value, $cast, t);
+          _PreconditioningProgramCopyWithImpl($value, $cast, t);
 }
 
 class AirConditioningModelMapper extends ClassMapperBase<AirConditioningModel> {
@@ -893,9 +889,9 @@ mixin AirConditioningModelMappable {
   }
 
   AirConditioningModelCopyWith<AirConditioningModel, AirConditioningModel,
-      AirConditioningModel> get copyWith => _AirConditioningModelCopyWithImpl<
-          AirConditioningModel, AirConditioningModel>(
-      this as AirConditioningModel, $identity, $identity);
+          AirConditioningModel>
+      get copyWith => _AirConditioningModelCopyWithImpl(
+          this as AirConditioningModel, $identity, $identity);
   @override
   String toString() {
     return AirConditioningModelMapper.ensureInitialized()
@@ -918,8 +914,8 @@ mixin AirConditioningModelMappable {
 extension AirConditioningModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, AirConditioningModel, $Out> {
   AirConditioningModelCopyWith<$R, AirConditioningModel, $Out>
-      get $asAirConditioningModel => $base.as(
-          (v, t, t2) => _AirConditioningModelCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asAirConditioningModel =>
+          $base.as((v, t, t2) => _AirConditioningModelCopyWithImpl(v, t, t2));
 }
 
 abstract class AirConditioningModelCopyWith<
@@ -975,7 +971,7 @@ class _AirConditioningModelCopyWithImpl<$R, $Out>
   @override
   AirConditioningModelCopyWith<$R2, AirConditioningModel, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _AirConditioningModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+          _AirConditioningModelCopyWithImpl($value, $cast, t);
 }
 
 class PreconditioningModelMapper extends ClassMapperBase<PreconditioningModel> {
@@ -1032,9 +1028,9 @@ mixin PreconditioningModelMappable {
   }
 
   PreconditioningModelCopyWith<PreconditioningModel, PreconditioningModel,
-      PreconditioningModel> get copyWith => _PreconditioningModelCopyWithImpl<
-          PreconditioningModel, PreconditioningModel>(
-      this as PreconditioningModel, $identity, $identity);
+          PreconditioningModel>
+      get copyWith => _PreconditioningModelCopyWithImpl(
+          this as PreconditioningModel, $identity, $identity);
   @override
   String toString() {
     return PreconditioningModelMapper.ensureInitialized()
@@ -1057,8 +1053,8 @@ mixin PreconditioningModelMappable {
 extension PreconditioningModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, PreconditioningModel, $Out> {
   PreconditioningModelCopyWith<$R, PreconditioningModel, $Out>
-      get $asPreconditioningModel => $base.as(
-          (v, t, t2) => _PreconditioningModelCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asPreconditioningModel =>
+          $base.as((v, t, t2) => _PreconditioningModelCopyWithImpl(v, t, t2));
 }
 
 abstract class PreconditioningModelCopyWith<
@@ -1094,7 +1090,7 @@ class _PreconditioningModelCopyWithImpl<$R, $Out>
   @override
   PreconditioningModelCopyWith<$R2, PreconditioningModel, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _PreconditioningModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+          _PreconditioningModelCopyWithImpl($value, $cast, t);
 }
 
 class VehicleOdometerMapper extends ClassMapperBase<VehicleOdometer> {
@@ -1153,9 +1149,8 @@ mixin VehicleOdometerMappable {
   }
 
   VehicleOdometerCopyWith<VehicleOdometer, VehicleOdometer, VehicleOdometer>
-      get copyWith =>
-          _VehicleOdometerCopyWithImpl<VehicleOdometer, VehicleOdometer>(
-              this as VehicleOdometer, $identity, $identity);
+      get copyWith => _VehicleOdometerCopyWithImpl(
+          this as VehicleOdometer, $identity, $identity);
   @override
   String toString() {
     return VehicleOdometerMapper.ensureInitialized()
@@ -1178,7 +1173,7 @@ mixin VehicleOdometerMappable {
 extension VehicleOdometerValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VehicleOdometer, $Out> {
   VehicleOdometerCopyWith<$R, VehicleOdometer, $Out> get $asVehicleOdometer =>
-      $base.as((v, t, t2) => _VehicleOdometerCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _VehicleOdometerCopyWithImpl(v, t, t2));
 }
 
 abstract class VehicleOdometerCopyWith<$R, $In extends VehicleOdometer, $Out>
@@ -1210,7 +1205,7 @@ class _VehicleOdometerCopyWithImpl<$R, $Out>
   @override
   VehicleOdometerCopyWith<$R2, VehicleOdometer, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VehicleOdometerCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _VehicleOdometerCopyWithImpl($value, $cast, t);
 }
 
 class VehicleStatusModelMapper extends ClassMapperBase<VehicleStatusModel> {
@@ -1306,8 +1301,8 @@ mixin VehicleStatusModelMappable {
 
   VehicleStatusModelCopyWith<VehicleStatusModel, VehicleStatusModel,
           VehicleStatusModel>
-      get copyWith => _VehicleStatusModelCopyWithImpl<VehicleStatusModel,
-          VehicleStatusModel>(this as VehicleStatusModel, $identity, $identity);
+      get copyWith => _VehicleStatusModelCopyWithImpl(
+          this as VehicleStatusModel, $identity, $identity);
   @override
   String toString() {
     return VehicleStatusModelMapper.ensureInitialized()
@@ -1330,8 +1325,8 @@ mixin VehicleStatusModelMappable {
 extension VehicleStatusModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, VehicleStatusModel, $Out> {
   VehicleStatusModelCopyWith<$R, VehicleStatusModel, $Out>
-      get $asVehicleStatusModel => $base.as(
-          (v, t, t2) => _VehicleStatusModelCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asVehicleStatusModel =>
+          $base.as((v, t, t2) => _VehicleStatusModelCopyWithImpl(v, t, t2));
 }
 
 abstract class VehicleStatusModelCopyWith<$R, $In extends VehicleStatusModel,
@@ -1425,5 +1420,5 @@ class _VehicleStatusModelCopyWithImpl<$R, $Out>
   @override
   VehicleStatusModelCopyWith<$R2, VehicleStatusModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _VehicleStatusModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _VehicleStatusModelCopyWithImpl($value, $cast, t);
 }

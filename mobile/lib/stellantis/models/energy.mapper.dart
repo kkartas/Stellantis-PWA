@@ -29,7 +29,7 @@ class EnergyTypeMapper extends EnumMapper<EnergyType> {
         return EnergyType.fuel;
       case 'Electric':
         return EnergyType.electric;
-      case r'unknown':
+      case 'unknown':
         return EnergyType.unknown;
       default:
         return EnergyType.values[2];
@@ -44,7 +44,7 @@ class EnergyTypeMapper extends EnumMapper<EnergyType> {
       case EnergyType.electric:
         return 'Electric';
       case EnergyType.unknown:
-        return r'unknown';
+        return 'unknown';
     }
   }
 }
@@ -176,9 +176,9 @@ mixin EnergyBatteryHealthMappable {
   }
 
   EnergyBatteryHealthCopyWith<EnergyBatteryHealth, EnergyBatteryHealth,
-      EnergyBatteryHealth> get copyWith => _EnergyBatteryHealthCopyWithImpl<
-          EnergyBatteryHealth, EnergyBatteryHealth>(
-      this as EnergyBatteryHealth, $identity, $identity);
+          EnergyBatteryHealth>
+      get copyWith => _EnergyBatteryHealthCopyWithImpl(
+          this as EnergyBatteryHealth, $identity, $identity);
   @override
   String toString() {
     return EnergyBatteryHealthMapper.ensureInitialized()
@@ -201,8 +201,8 @@ mixin EnergyBatteryHealthMappable {
 extension EnergyBatteryHealthValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnergyBatteryHealth, $Out> {
   EnergyBatteryHealthCopyWith<$R, EnergyBatteryHealth, $Out>
-      get $asEnergyBatteryHealth => $base.as(
-          (v, t, t2) => _EnergyBatteryHealthCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asEnergyBatteryHealth =>
+          $base.as((v, t, t2) => _EnergyBatteryHealthCopyWithImpl(v, t, t2));
 }
 
 abstract class EnergyBatteryHealthCopyWith<$R, $In extends EnergyBatteryHealth,
@@ -239,7 +239,7 @@ class _EnergyBatteryHealthCopyWithImpl<$R, $Out>
   @override
   EnergyBatteryHealthCopyWith<$R2, EnergyBatteryHealth, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _EnergyBatteryHealthCopyWithImpl<$R2, $Out2>($value, $cast, t);
+          _EnergyBatteryHealthCopyWithImpl($value, $cast, t);
 }
 
 class EnergyBatteryMapper extends ClassMapperBase<EnergyBattery> {
@@ -299,7 +299,7 @@ mixin EnergyBatteryMappable {
   }
 
   EnergyBatteryCopyWith<EnergyBattery, EnergyBattery, EnergyBattery>
-      get copyWith => _EnergyBatteryCopyWithImpl<EnergyBattery, EnergyBattery>(
+      get copyWith => _EnergyBatteryCopyWithImpl(
           this as EnergyBattery, $identity, $identity);
   @override
   String toString() {
@@ -323,7 +323,7 @@ mixin EnergyBatteryMappable {
 extension EnergyBatteryValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnergyBattery, $Out> {
   EnergyBatteryCopyWith<$R, EnergyBattery, $Out> get $asEnergyBattery =>
-      $base.as((v, t, t2) => _EnergyBatteryCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _EnergyBatteryCopyWithImpl(v, t, t2));
 }
 
 abstract class EnergyBatteryCopyWith<$R, $In extends EnergyBattery, $Out>
@@ -359,7 +359,7 @@ class _EnergyBatteryCopyWithImpl<$R, $Out>
   @override
   EnergyBatteryCopyWith<$R2, EnergyBattery, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _EnergyBatteryCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _EnergyBatteryCopyWithImpl($value, $cast, t);
 }
 
 class EnergyChargingMapper extends ClassMapperBase<EnergyCharging> {
@@ -440,9 +440,8 @@ mixin EnergyChargingMappable {
   }
 
   EnergyChargingCopyWith<EnergyCharging, EnergyCharging, EnergyCharging>
-      get copyWith =>
-          _EnergyChargingCopyWithImpl<EnergyCharging, EnergyCharging>(
-              this as EnergyCharging, $identity, $identity);
+      get copyWith => _EnergyChargingCopyWithImpl(
+          this as EnergyCharging, $identity, $identity);
   @override
   String toString() {
     return EnergyChargingMapper.ensureInitialized()
@@ -465,7 +464,7 @@ mixin EnergyChargingMappable {
 extension EnergyChargingValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnergyCharging, $Out> {
   EnergyChargingCopyWith<$R, EnergyCharging, $Out> get $asEnergyCharging =>
-      $base.as((v, t, t2) => _EnergyChargingCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _EnergyChargingCopyWithImpl(v, t, t2));
 }
 
 abstract class EnergyChargingCopyWith<$R, $In extends EnergyCharging, $Out>
@@ -517,7 +516,7 @@ class _EnergyChargingCopyWithImpl<$R, $Out>
   @override
   EnergyChargingCopyWith<$R2, EnergyCharging, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _EnergyChargingCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _EnergyChargingCopyWithImpl($value, $cast, t);
 }
 
 class EnergyModelMapper extends ClassMapperBase<EnergyModel> {
@@ -610,8 +609,7 @@ mixin EnergyModelMappable {
   }
 
   EnergyModelCopyWith<EnergyModel, EnergyModel, EnergyModel> get copyWith =>
-      _EnergyModelCopyWithImpl<EnergyModel, EnergyModel>(
-          this as EnergyModel, $identity, $identity);
+      _EnergyModelCopyWithImpl(this as EnergyModel, $identity, $identity);
   @override
   String toString() {
     return EnergyModelMapper.ensureInitialized()
@@ -633,7 +631,7 @@ mixin EnergyModelMappable {
 extension EnergyModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, EnergyModel, $Out> {
   EnergyModelCopyWith<$R, EnergyModel, $Out> get $asEnergyModel =>
-      $base.as((v, t, t2) => _EnergyModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _EnergyModelCopyWithImpl(v, t, t2));
 }
 
 abstract class EnergyModelCopyWith<$R, $In extends EnergyModel, $Out>
@@ -700,5 +698,5 @@ class _EnergyModelCopyWithImpl<$R, $Out>
   @override
   EnergyModelCopyWith<$R2, EnergyModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _EnergyModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _EnergyModelCopyWithImpl($value, $cast, t);
 }

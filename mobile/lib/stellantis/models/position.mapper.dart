@@ -62,8 +62,7 @@ mixin GeoPointMappable {
   }
 
   GeoPointCopyWith<GeoPoint, GeoPoint, GeoPoint> get copyWith =>
-      _GeoPointCopyWithImpl<GeoPoint, GeoPoint>(
-          this as GeoPoint, $identity, $identity);
+      _GeoPointCopyWithImpl(this as GeoPoint, $identity, $identity);
   @override
   String toString() {
     return GeoPointMapper.ensureInitialized().stringifyValue(this as GeoPoint);
@@ -83,7 +82,7 @@ mixin GeoPointMappable {
 
 extension GeoPointValueCopy<$R, $Out> on ObjectCopyWith<$R, GeoPoint, $Out> {
   GeoPointCopyWith<$R, GeoPoint, $Out> get $asGeoPoint =>
-      $base.as((v, t, t2) => _GeoPointCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _GeoPointCopyWithImpl(v, t, t2));
 }
 
 abstract class GeoPointCopyWith<$R, $In extends GeoPoint, $Out>
@@ -123,7 +122,7 @@ class _GeoPointCopyWithImpl<$R, $Out>
   @override
   GeoPointCopyWith<$R2, GeoPoint, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _GeoPointCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _GeoPointCopyWithImpl($value, $cast, t);
 }
 
 class PositionPropertiesMapper extends ClassMapperBase<PositionProperties> {
@@ -194,8 +193,8 @@ mixin PositionPropertiesMappable {
 
   PositionPropertiesCopyWith<PositionProperties, PositionProperties,
           PositionProperties>
-      get copyWith => _PositionPropertiesCopyWithImpl<PositionProperties,
-          PositionProperties>(this as PositionProperties, $identity, $identity);
+      get copyWith => _PositionPropertiesCopyWithImpl(
+          this as PositionProperties, $identity, $identity);
   @override
   String toString() {
     return PositionPropertiesMapper.ensureInitialized()
@@ -218,8 +217,8 @@ mixin PositionPropertiesMappable {
 extension PositionPropertiesValueCopy<$R, $Out>
     on ObjectCopyWith<$R, PositionProperties, $Out> {
   PositionPropertiesCopyWith<$R, PositionProperties, $Out>
-      get $asPositionProperties => $base.as(
-          (v, t, t2) => _PositionPropertiesCopyWithImpl<$R, $Out>(v, t, t2));
+      get $asPositionProperties =>
+          $base.as((v, t, t2) => _PositionPropertiesCopyWithImpl(v, t, t2));
 }
 
 abstract class PositionPropertiesCopyWith<$R, $In extends PositionProperties,
@@ -260,7 +259,7 @@ class _PositionPropertiesCopyWithImpl<$R, $Out>
   @override
   PositionPropertiesCopyWith<$R2, PositionProperties, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _PositionPropertiesCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _PositionPropertiesCopyWithImpl($value, $cast, t);
 }
 
 class PositionModelMapper extends ClassMapperBase<PositionModel> {
@@ -327,7 +326,7 @@ mixin PositionModelMappable {
   }
 
   PositionModelCopyWith<PositionModel, PositionModel, PositionModel>
-      get copyWith => _PositionModelCopyWithImpl<PositionModel, PositionModel>(
+      get copyWith => _PositionModelCopyWithImpl(
           this as PositionModel, $identity, $identity);
   @override
   String toString() {
@@ -351,7 +350,7 @@ mixin PositionModelMappable {
 extension PositionModelValueCopy<$R, $Out>
     on ObjectCopyWith<$R, PositionModel, $Out> {
   PositionModelCopyWith<$R, PositionModel, $Out> get $asPositionModel =>
-      $base.as((v, t, t2) => _PositionModelCopyWithImpl<$R, $Out>(v, t, t2));
+      $base.as((v, t, t2) => _PositionModelCopyWithImpl(v, t, t2));
 }
 
 abstract class PositionModelCopyWith<$R, $In extends PositionModel, $Out>
@@ -397,5 +396,5 @@ class _PositionModelCopyWithImpl<$R, $Out>
   @override
   PositionModelCopyWith<$R2, PositionModel, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _PositionModelCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _PositionModelCopyWithImpl($value, $cast, t);
 }
