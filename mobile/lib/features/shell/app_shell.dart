@@ -111,11 +111,12 @@ class SettingsPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          const ListTile(
-            leading: Icon(Icons.straighten),
-            title: Text('Units'),
-            subtitle: Text('km/mi, °C/°F, currency (Phase 6)'),
-            enabled: false,
+          ListTile(
+            leading: const Icon(Icons.straighten),
+            title: const Text('Units'),
+            subtitle: const Text('km/mi, °C/°F, currency'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/units'),
           ),
           const ListTile(
             leading: Icon(Icons.bolt),
