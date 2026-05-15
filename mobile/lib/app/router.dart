@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
+import 'package:stellantis_mobile/features/auth/login_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -18,7 +19,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginPlaceholderPage(),
+        builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/otp-setup',
+        builder: (context, state) => const _OtpSetupPlaceholderPage(),
       ),
       GoRoute(
         path: '/',
@@ -39,13 +44,13 @@ class DashboardPlaceholderPage extends StatelessWidget {
   }
 }
 
-class LoginPlaceholderPage extends StatelessWidget {
-  const LoginPlaceholderPage({super.key});
+class _OtpSetupPlaceholderPage extends StatelessWidget {
+  const _OtpSetupPlaceholderPage();
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: Text('Login')),
+      body: Center(child: Text('OTP setup (placeholder)')),
     );
   }
 }
