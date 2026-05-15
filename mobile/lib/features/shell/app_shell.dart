@@ -132,6 +132,14 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/maintenance'),
           ),
+          ListTile(
+            leading: const Icon(Icons.alt_route),
+            title: const Text('ABRP'),
+            subtitle:
+                const Text('Forward telemetry to A Better Route Planner'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/abrp'),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(
