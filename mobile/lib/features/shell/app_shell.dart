@@ -118,11 +118,12 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/units'),
           ),
-          const ListTile(
-            leading: Icon(Icons.bolt),
-            title: Text('Charging'),
-            subtitle: Text('Target SOC, schedule, kWh price (Phase 6)'),
-            enabled: false,
+          ListTile(
+            leading: const Icon(Icons.bolt),
+            title: const Text('Charging'),
+            subtitle: const Text('Target SOC, schedule, kWh price'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/charging'),
           ),
           ListTile(
             leading: const Icon(Icons.build_outlined),
