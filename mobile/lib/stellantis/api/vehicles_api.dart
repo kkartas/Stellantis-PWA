@@ -2,6 +2,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
+import 'package:stellantis_mobile/core/perf/json_isolate.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle_status.dart';
 import 'package:stellantis_mobile/stellantis/network/psa_http_client.dart';
@@ -90,16 +91,26 @@ class VehiclesApi {
 
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final response = await _dio.get<Map<String, dynamic>>(
+        // Fetch as plain text so we can hand large bodies off to an
+        // isolate before paying the dart_mappable parse cost.
+        final response = await _dio.get<String>(
           '/user/vehicles/$vehicleId/status',
           queryParameters: {'client_id': clientId},
-          options: Options(headers: headers),
+          options: Options(
+            headers: headers,
+            responseType: ResponseType.plain,
+          ),
         );
 
-        final data = response.data;
-        if (data == null) return null;
+        final body = response.data;
+        if (body == null || body.isEmpty) return null;
 
-        return VehicleStatusModelMapper.fromMap(data);
+        final decoded = await parseJsonAsync(body);
+        if (decoded is! Map<String, dynamic>) {
+          _log.w('getVehicleStatus: unexpected JSON shape');
+          return null;
+        }
+        return VehicleStatusModelMapper.fromMap(decoded);
       } on DioException catch (e) {
         final status = e.response?.statusCode;
         if (status == 401 || status == 403) rethrow;
