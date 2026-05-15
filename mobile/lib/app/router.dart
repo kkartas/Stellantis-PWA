@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -12,12 +13,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashPage(),
       ),
       GoRoute(
-        path: '/',
-        builder: (context, state) => const DashboardPlaceholderPage(),
+        path: '/brand-picker',
+        builder: (context, state) => const BrandPickerPage(),
       ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPlaceholderPage(),
+      ),
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const DashboardPlaceholderPage(),
       ),
     ],
   );
