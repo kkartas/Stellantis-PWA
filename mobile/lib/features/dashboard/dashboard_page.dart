@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/core/perf/prefetcher.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/dashboard/data/quick_action_controller.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/battery_ring.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/hero_card.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
+import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -68,7 +70,14 @@ class DashboardPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: WakeRefreshIndicator(
+      body: Prefetcher(
+        providers: [
+          tripRepoProvider,
+          chargeRepoProvider,
+          sohRepoProvider,
+          alertRepoProvider,
+        ],
+        child: WakeRefreshIndicator(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -93,6 +102,7 @@ class DashboardPage extends ConsumerWidget {
             const SizedBox(height: 20),
             _StatsStrip(status: status),
           ],
+        ),
         ),
       ),
     );
