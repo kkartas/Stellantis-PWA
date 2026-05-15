@@ -102,14 +102,6 @@ class _ShellDestination {
 /// Placeholder pages — replaced one-by-one in Phase 6.
 
 
-class ChargingPage extends StatelessWidget {
-  const ChargingPage({super.key});
-
-  @override
-  Widget build(BuildContext context) =>
-      const _PlaceholderTab(title: 'Charging');
-}
-
 class StatsPage extends StatelessWidget {
   const StatsPage({super.key});
 
