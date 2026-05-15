@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
+import 'package:stellantis_mobile/core/ui/skeleton.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
@@ -49,7 +50,7 @@ class VehiclePickerPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Choose your vehicle')),
       body: async.when(
-        loading: () => const LoadingStateView(message: 'Loading vehicles...'),
+        loading: () => const SkeletonList(rows: 3, rowHeight: 88),
         error: (e, st) => mapErrorToStateView(
           e,
           onRetry: () => ref.invalidate(_fetchedVehiclesProvider),

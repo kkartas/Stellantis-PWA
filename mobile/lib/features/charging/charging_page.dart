@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/core/ui/skeleton.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
@@ -27,7 +28,7 @@ class ChargingPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Charging')),
       body: chargesAsync.when(
-        loading: () => const LoadingStateView(),
+        loading: () => const SkeletonList(),
         error: (e, _) => mapErrorToStateView(e),
         data: (charges) {
           if (charges.isEmpty) {

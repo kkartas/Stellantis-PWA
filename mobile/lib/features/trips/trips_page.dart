@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/core/ui/skeleton.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/trips/data/trip_filter.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
@@ -64,7 +65,7 @@ class TripsPage extends ConsumerWidget {
           ),
           Expanded(
             child: tripsAsync.when(
-              loading: () => const LoadingStateView(),
+              loading: () => const SkeletonList(),
               error: (e, _) => mapErrorToStateView(e),
               data: (trips) {
                 final visible = filter.apply(trips);
