@@ -1,0 +1,5 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Opel logo">
+  <rect width="64" height="64" rx="16" fill="#151b26"/>
+  <circle cx="32" cy="32" r="17" fill="none" stroke="#f4f7fb" stroke-width="3"/>
+  <path d="M16 34h13l7-11h12l-8 17H28z" fill="#f7b32b"/>
+</svg>

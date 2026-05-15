@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Chrysler logo">
+  <rect width="64" height="64" rx="12" fill="#1C1C1C"/>
+  <path d="M32 14 L46 32 L32 50 L18 32 Z" fill="none" stroke="#C5A028" stroke-width="2.5"/>
+  <path d="M22 32 L42 32" stroke="#C5A028" stroke-width="2"/>
+  <text x="32" y="58" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="6" font-weight="600" fill="#C5A028">CHRYSLER</text>
+</svg>
