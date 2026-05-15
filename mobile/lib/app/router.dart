@@ -7,6 +7,7 @@ import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
 import 'package:stellantis_mobile/features/shell/app_shell.dart';
+import 'package:stellantis_mobile/features/vehicle_detail/location_page.dart';
 import 'package:stellantis_mobile/features/vehicle_detail/vehicle_detail_page.dart';
 import 'package:stellantis_mobile/features/vehicles/vehicle_picker_page.dart';
 
@@ -47,6 +48,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'vehicle',
                     builder: (context, state) => const VehicleDetailPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'location',
+                        builder: (context, state) =>
+                            const VehicleLocationPage(),
+                      ),
+                    ],
                   ),
                 ],
               ),

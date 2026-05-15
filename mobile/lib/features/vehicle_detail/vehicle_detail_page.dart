@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
@@ -21,7 +22,16 @@ class VehicleDetailPage extends ConsumerWidget {
     final cachedStatus = ref.watch(latestStatusProvider).valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Vehicle')),
+      appBar: AppBar(
+        title: const Text('Vehicle'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.map_outlined),
+            tooltip: 'Location',
+            onPressed: () => context.go('/vehicle/location'),
+          ),
+        ],
+      ),
       body: WakeRefreshIndicator(
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
