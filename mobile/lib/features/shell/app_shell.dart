@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:stellantis_mobile/features/auth/data/session_service.dart';
 
 /// Top-level navigation shell. Renders a [NavigationBar] on Android and a
 /// [CupertinoTabBar] on iOS so the destination switcher matches platform
@@ -99,14 +97,12 @@ class _ShellDestination {
   final IconData cupertinoIcon;
 }
 
-/// Placeholder pages — replaced one-by-one in Phase 6.
-
-
-class SettingsPage extends ConsumerWidget {
+/// Settings root — every entry below is its own sub-route under /settings.
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -156,66 +152,13 @@ class SettingsPage extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
-            leading: Icon(
-              Icons.logout,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              'Sign out',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            subtitle:
-                const Text('Clears tokens, OTP credentials and local cache.'),
-            onTap: () => _confirmLogout(context, ref),
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Account'),
+            subtitle: const Text('Signed-in brand, vehicles, sign out'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/account'),
           ),
         ],
-      ),
-    );
-  }
-
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
-          'You\'ll need to sign in again and set up OTP. Trip history and '
-          'charging sessions stored on this device will be erased.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    await ref.read(sessionServiceProvider).logout();
-    if (!context.mounted) return;
-    context.go('/brand-picker');
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
       ),
     );
   }
