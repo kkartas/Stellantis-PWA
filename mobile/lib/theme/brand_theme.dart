@@ -411,10 +411,33 @@ class BrandTheme {
     displayFont: 'Inter',
   );
 
+  static const BrandTheme dodge = BrandTheme(
+    brand: Brand.dodge,
+    primary: Color(0xFFCC0000),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFF1A1A1A),
+    onSecondary: Color(0xFFFFFFFF),
+    tertiary: Color(0xFFE85C5C),
+    onTertiary: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF1A1A1A),
+    background: Color(0xFFF2F0EE),
+    darkPrimary: Color(0xFFE83535),
+    darkOnPrimary: Color(0xFFFFFFFF),
+    darkSurface: Color(0xFF1E1A1A),
+    darkOnSurface: Color(0xFFF5F5F5),
+    darkBackground: Color(0xFF0A0606),
+    logoAsset: 'assets/brands/dodge.svg',
+    displayFont: 'Inter',
+    fastDuration: Duration(milliseconds: 150),
+    fastCurve: Curves.easeOutCubic,
+  );
+
   static const Map<Brand, BrandTheme> perBrand = {
     Brand.alfaRomeo: alfaRomeo,
     Brand.chrysler: chrysler,
     Brand.citroen: citroen,
+    Brand.dodge: dodge,
     Brand.ds: ds,
     Brand.fiat: fiat,
     Brand.jeep: jeep,
