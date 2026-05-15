@@ -7,6 +7,7 @@ import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
 import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
 import 'package:stellantis_mobile/features/shell/app_shell.dart';
+import 'package:stellantis_mobile/features/charging/charging_detail_page.dart';
 import 'package:stellantis_mobile/features/charging/charging_page.dart';
 import 'package:stellantis_mobile/features/trips/trip_detail_page.dart';
 import 'package:stellantis_mobile/features/trips/trips_page.dart';
@@ -92,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final id =
                           int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-                      return _ChargingDetailPlaceholder(id: id);
+                      return ChargingDetailPage(chargeId: id);
                     },
                   ),
                 ],
@@ -121,16 +122,4 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class _ChargingDetailPlaceholder extends StatelessWidget {
-  const _ChargingDetailPlaceholder({required this.id});
-  final int id;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Charge $id')),
-      body: const Center(child: Text('Charging detail (6.8)')),
-    );
-  }
-}
 
