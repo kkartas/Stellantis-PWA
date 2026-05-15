@@ -147,6 +147,13 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go('/settings/openweather'),
           ),
+          ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('Theme'),
+            subtitle: const Text('Auto-brand vs forced brand'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go('/settings/theme'),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(
