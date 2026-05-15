@@ -5,6 +5,7 @@ import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
 import 'package:stellantis_mobile/features/auth/login_page.dart';
 import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
+import 'package:stellantis_mobile/features/shell/app_shell.dart';
 import 'package:stellantis_mobile/features/vehicles/vehicle_picker_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -31,22 +32,52 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/vehicle-picker',
         builder: (context, state) => const VehiclePickerPage(),
       ),
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const DashboardPlaceholderPage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const DashboardPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/trips',
+                builder: (context, state) => const TripsPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/charging',
+                builder: (context, state) => const ChargingPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/stats',
+                builder: (context, state) => const StatsPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsPage(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
 });
-
-class DashboardPlaceholderPage extends StatelessWidget {
-  const DashboardPlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Dashboard')),
-    );
-  }
-}
-
