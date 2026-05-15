@@ -83,6 +83,15 @@ class TripsPage extends ConsumerWidget {
                   itemCount: visible.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) => _TripTile(trip: visible[i]),
+                  // Keep widgets disposed off-screen — TripTile is cheap
+                  // to rebuild and the records list can grow into hundreds.
+                  addAutomaticKeepAlives: false,
+                  // One repaint boundary per row keeps scroll bursts from
+                  // forcing the whole list to repaint.
+                  addRepaintBoundaries: true,
+                  // Pre-build a screen of items ahead so fast flings stay
+                  // smooth without paying for the whole list at once.
+                  cacheExtent: 600,
                 );
               },
             ),

@@ -38,6 +38,7 @@ class ChargingPage extends ConsumerWidget {
             );
           }
           return CustomScrollView(
+            cacheExtent: 600,
             slivers: [
               SliverToBoxAdapter(child: _TotalsCard(charges: charges)),
               SliverPadding(
@@ -47,6 +48,7 @@ class ChargingPage extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, i) =>
                       _ChargeTile(charge: charges[i]),
+                  addAutomaticKeepAlives: false,
                 ),
               ),
             ],
