@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/core/ui/state_lottie.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
@@ -192,10 +193,16 @@ class _ClimateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ac = live?.preconditioning?.airConditioning;
+    final acOn = ac?.status == AirConditioningStatus.enabled;
     return _SectionCard(
       title: 'Climate',
       icon: Icons.ac_unit,
       children: [
+        if (acOn)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: StateLottieView(kind: StateLottie.climateOn, size: 80),
+          ),
         _KeyValue(
           label: 'Air conditioning',
           value: ac == null

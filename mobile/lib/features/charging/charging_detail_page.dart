@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stellantis_mobile/core/ui/state_lottie.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/app_database.dart';
@@ -134,7 +135,13 @@ class _CurveCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Charge curve', style: theme.textTheme.titleMedium),
+            Row(
+              children: [
+                const StateLottieView(kind: StateLottie.charging, size: 48),
+                const SizedBox(width: 8),
+                Text('Charge curve', style: theme.textTheme.titleMedium),
+              ],
+            ),
             const SizedBox(height: 8),
             Text(
               hasRange
