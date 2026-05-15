@@ -59,6 +59,23 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.stellantis.app.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mymap</string>
+				<string>mymacsdk</string>
+				<string>mymdssdk</string>
+				<string>mymopsdk</string>
+				<string>mymvxsdk</string>
+			</array>
+		</dict>
+	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
