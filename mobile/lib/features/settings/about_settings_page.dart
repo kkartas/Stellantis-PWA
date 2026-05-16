@@ -4,6 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/app_database.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/alert_record.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/charge_record.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/maintenance_record.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/soh_record.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/status_snapshot.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/trip_record.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/vehicle_record.dart';
 
 const _kAppVersion = '1.0.0-dev';
 const _kBuildChannel = 'beta';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/app_database.dart';
@@ -14,7 +15,7 @@ final _maintenanceProvider =
   }
   final isar = await ref.watch(isarProvider.future);
   yield* isar.maintenanceRecords
-      .filter()
+      .where()
       .vinEqualTo(vin)
       .watch(fireImmediately: true);
 });
