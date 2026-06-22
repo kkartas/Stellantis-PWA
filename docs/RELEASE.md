@@ -31,6 +31,11 @@ Two Codemagic workflows are defined in `codemagic.yaml` at the repo root:
 
 ## Android Signing
 
+The release build reads its signing config from `mobile/android/key.properties`
+(gitignored) and falls back to debug keys when that file is absent — so local
+`flutter run --release` works without a keystore. See
+`mobile/android/key.properties.example` for the format.
+
 1. Generate a keystore (keep this file out of version control):
    ```sh
    keytool -genkey -v \
@@ -39,15 +44,13 @@ Two Codemagic workflows are defined in `codemagic.yaml` at the repo root:
      -keyalg RSA -keysize 2048 \
      -validity 10000
    ```
-2. In Codemagic → App Settings → Code Signing → Android, upload `stellantis.keystore`
-   and name it `stellantis_keystore` (matches the reference in `codemagic.yaml`).
-3. Set the following environment variables in Codemagic App Settings → Environment variables:
-
-   | Variable | Value |
-   |---|---|
-   | `KEY_ALIAS` | the alias used in keytool (e.g. `stellantis`) |
-   | `KEY_PASSWORD` | key password |
-   | `STORE_PASSWORD` | keystore password |
+2. **Local release builds:** copy `key.properties.example` to
+   `mobile/android/key.properties` and fill in `storeFile`, `storePassword`,
+   `keyAlias`, `keyPassword`.
+3. **CI:** in Codemagic → App Settings → Code Signing → Android, upload the
+   keystore and name it `stellantis_keystore` (matches the reference in
+   `codemagic.yaml`). Codemagic injects it and generates `key.properties` for
+   the build automatically — do not commit a real `key.properties`.
 
 ---
 
@@ -66,19 +69,25 @@ Two Codemagic workflows are defined in `codemagic.yaml` at the repo root:
    | `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID from App Store Connect |
    | `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID from App Store Connect |
 
-Bundle identifier: `com.stellantis.app` (matches `codemagic.yaml` and `mobile/ios/Runner/Info.plist`).
+Bundle identifier: `com.stellantis.app.stellantisMobile` (matches `codemagic.yaml`
+`ios-release` and `mobile/ios/Runner.xcodeproj`). The Android applicationId is
+`com.stellantis.app.stellantis_mobile` (underscores are invalid in iOS bundle ids,
+hence the per-platform spelling).
 
 ---
 
 ## First-Time Setup Checklist
 
-- [ ] Register bundle ID `com.stellantis.app` in Apple Developer portal
+- [ ] Register bundle ID `com.stellantis.app.stellantisMobile` in Apple Developer portal
 - [ ] Create App Store listing skeleton in App Store Connect (name, category, description)
-- [ ] Create Play Console listing skeleton (app name, default language, APK uploaded)
-- [ ] Configure Firebase project and App Distribution group `internal-testers`
+- [ ] Set up the **TestFlight internal testing** group and add internal testers (plan 9.4)
+- [ ] Create Play Console listing skeleton (app name, default language, AAB uploaded)
+- [ ] Set up the Play **Internal Testing** track and add testers (plan 9.3)
+- [ ] Configure Firebase project and App Distribution group `internal-testers` (plan 9.5)
 - [ ] Set `FIREBASE_TOKEN` and `FIREBASE_ANDROID_APP_ID` env vars in Codemagic
 - [ ] Connect Codemagic to the GitHub repo and enable both workflows on `main`
-- [ ] Run `shorebird init` inside `mobile/` and commit `shorebird.yaml` (Phase 9)
+- [ ] Run `shorebird init` inside `mobile/` to replace the placeholder `app_id`
+      in `mobile/shorebird.yaml`, then commit it (plan 9.6)
 
 ---
 
@@ -120,14 +129,33 @@ integration).
 
 ---
 
+## Cutting the v1.0.0-beta.1 Beta
+
+Do this only once the Phase 1–9 quality gates pass (`flutter analyze` clean,
+`flutter test` green, release builds succeed on both platforms):
+
+1. Bump `version:` in `mobile/pubspec.yaml` to `1.0.0-beta.1+1`.
+2. Update `CHANGELOG.md` — move items from *Unreleased* into a dated
+   `1.0.0-beta.1` section.
+3. Commit `chore(release): v1.0.0-beta.1` and tag:
+   ```sh
+   git tag v1.0.0-beta.1
+   git push --tags
+   ```
+4. Codemagic builds and distributes to the TestFlight internal group and
+   Firebase App Distribution `internal-testers`.
+5. Monitor crash-free sessions (target > 99% over the 1-week beta window).
+
+---
+
 ## Environment Variables Reference
 
 | Variable | Workflow | Purpose |
 |---|---|---|
-| `PACKAGE_NAME` | android-release | APK package name (`com.stellantis.app`) |
+| `PACKAGE_NAME` | android-release | APK package name (`com.stellantis.app.stellantis_mobile`) |
 | `FIREBASE_TOKEN` | android-release | Firebase CLI token for App Distribution |
 | `FIREBASE_ANDROID_APP_ID` | android-release | Firebase Android app ID |
-| `BUNDLE_ID` | ios-release | iOS bundle identifier |
+| `BUNDLE_ID` | ios-release | iOS bundle identifier (`com.stellantis.app.stellantisMobile`) |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | ios-release | App Store Connect API key (`.p8` contents) |
 | `APP_STORE_CONNECT_KEY_IDENTIFIER` | ios-release | App Store Connect API key ID |
 | `APP_STORE_CONNECT_ISSUER_ID` | ios-release | App Store Connect issuer ID |
