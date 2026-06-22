@@ -336,7 +336,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | # | Task | Commit | Status |
 |---|---|---|---|
 | 8.1 | Unit tests for every parser (port from `tests/test_psa.py` and `tests/test_unit.py`) | `test: port legacy parser tests` | [x] analytics, models, theme |
-| 8.2 | Widget tests for every screen | `test(ui): widget tests` | [~] core UI primitives covered (battery ring, state views, skeleton, glass card); full per-screen pending |
+| 8.2 | Widget tests for every screen | `test(ui): widget tests` | [x] 21/22 screens (settings, auth, dashboard, vehicle, trips, charging, stats, maintenance, detail pages) + core primitives; splash deferred to E2E |
 | 8.3 | Golden tests for every brand theme | `test(theme): golden suite` | [x] see 4.18 |
 | 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` | [ ] no `integration_test/` |
 | 8.5 | Replay-based tests using recorded Stellantis fixtures | `test(stellantis): replay fixtures` | [x] `test/fixtures/stellantis/*.json` + model-parse and `VehiclesApi` fake-adapter replay tests |

@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:isar/isar.dart';
 import 'package:stellantis_mobile/l10n/app_localizations.dart';
+import 'package:stellantis_mobile/stellantis/storage/app_database.dart';
+
+/// Override that makes [isarProvider] fail fast instead of trying to open a
+/// real database (Isar's native core is not loaded under the test binding).
+/// Screens that read Isar then render their deterministic error/empty state.
+Override isarUnavailable() => isarProvider.overrideWith(
+      (ref) => Future<Isar>.error(
+        StateError('Isar is unavailable in widget tests'),
+      ),
+    );
 
 /// Shared scaffolding for widget tests.
 ///
