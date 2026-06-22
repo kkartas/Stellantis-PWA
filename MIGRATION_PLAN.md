@@ -347,7 +347,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| 9.1 | Android signing config, keystore handled via Codemagic env | `chore(android): signing` | [~] `codemagic.yaml` present; verify signing block |
+| 9.1 | Android signing config, keystore handled via Codemagic env | `chore(android): signing` | [x] `key.properties`-driven release signing with debug fallback; `key.properties.example` template |
 | 9.2 | iOS certs + provisioning via App Store Connect API | `chore(ios): signing` | [~] via codemagic; verify |
 | 9.3 | Play Console Internal Testing track setup | `chore(release): play internal track` | [ ] |
 | 9.4 | TestFlight internal group setup | `chore(release): testflight` | [ ] |

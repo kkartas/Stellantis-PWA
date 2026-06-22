@@ -1,0 +1,13 @@
+# Copy to `android/key.properties` (gitignored) and fill in to sign release
+# builds locally. CI (Codemagic) injects these via the `stellantis_keystore`
+# reference instead of this file — see codemagic.yaml and docs/RELEASE.md.
+#
+# Generate a keystore with:
+#   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias upload
+#
+# storeFile may be an absolute path or relative to android/app/.
+storePassword=changeit
+keyPassword=changeit
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

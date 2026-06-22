@@ -213,7 +213,15 @@ Keep it consistent with [SECURITY.md §7](SECURITY.md). **Commit:**
 
 ---
 
-## 4. Android release signing (plan 9.1)
+## 4. Android release signing (plan 9.1) — ✅ DONE
+
+> Implemented in [`build.gradle.kts`](../mobile/android/app/build.gradle.kts):
+> reads `android/key.properties` (gitignored), creates a `release` signing
+> config, and falls back to debug keys when the file is absent so
+> `flutter run --release` still works. Template:
+> [`key.properties.example`](../mobile/android/key.properties.example).
+> Validated via `gradlew :app:tasks`. Original instructions below.
+
 
 Currently [`build.gradle.kts`](../mobile/android/app/build.gradle.kts) lines
 34–40 sign the release build with the **debug** keystore. Replace with a real
