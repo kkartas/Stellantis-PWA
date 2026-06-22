@@ -9,7 +9,7 @@ import 'package:stellantis_mobile/features/shell/data/vehicle_refresh_controller
 /// Default reads should keep using the cached Isar stream — only an explicit
 /// pull triggers the wake. The plan calls this "pull-to-refresh = wake".
 class WakeRefreshIndicator extends ConsumerWidget {
-  const WakeRefreshIndicator({super.key, required this.child});
+  const WakeRefreshIndicator({required this.child, super.key});
 
   final Widget child;
 

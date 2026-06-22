@@ -17,7 +17,8 @@ const _log = AppLogger('VehiclePicker');
 
 /// Fetches vehicles from the API and writes them into Isar. The list is the
 /// authoritative source after this runs.
-final _fetchedVehiclesProvider = FutureProvider<List<VehicleModel>>((ref) async {
+final _fetchedVehiclesProvider =
+    FutureProvider<List<VehicleModel>>((ref) async {
   final session = ref.watch(selectedBrandSessionProvider);
   if (session == null) return const [];
   final clientId = BrandSecrets.clientId[session.cacheKey] ?? '';
@@ -115,4 +116,3 @@ class VehiclePickerPage extends ConsumerWidget {
     context.go('/');
   }
 }
-

@@ -16,7 +16,7 @@ const _authenticatableBrands = <Brand>[
   Brand.vauxhall,
 ];
 
-/// Country options offered for the auth flow. Driven by [BrandSecrets] keys
+/// Country options offered for the auth flow. Driven by BrandSecrets keys
 /// in tools/extract_secrets — keep aligned when new countries are added.
 const _countries = <_Country>[
   _Country('FR', 'France'),

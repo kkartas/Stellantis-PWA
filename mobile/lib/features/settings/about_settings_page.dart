@@ -38,7 +38,8 @@ class _CacheStats {
       vehicles + statusSnapshots + trips + charges + soh + alerts + maintenance;
 }
 
-final _cacheStatsProvider = FutureProvider.autoDispose<_CacheStats>((ref) async {
+final _cacheStatsProvider =
+    FutureProvider.autoDispose<_CacheStats>((ref) async {
   final isar = await ref.watch(isarProvider.future);
   final counts = await Future.wait([
     isar.vehicleRecords.count(),
@@ -161,7 +162,7 @@ class AboutSettingsPage extends ConsumerWidget {
       ..writeln('Generated: ${DateTime.now().toUtc().toIso8601String()}')
       ..writeln('Active VIN: ${activeVin ?? "(none)"}')
       ..writeln('Last refresh: ${lastRefresh?.toIso8601String() ?? "never"}')
-      ..writeln('')
+      ..writeln()
       ..writeln('Cache rows:');
     if (cache != null) {
       buf

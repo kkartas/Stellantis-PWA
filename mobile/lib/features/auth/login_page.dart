@@ -60,8 +60,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'You\'ll be redirected to ${_brandName(session)} to sign in. '
-                'After approving access, you\'ll come back here automatically.',
+                "You'll be redirected to ${_brandName(session)} to sign in. "
+                "After approving access, you'll come back here automatically.",
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),

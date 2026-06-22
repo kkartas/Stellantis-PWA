@@ -17,7 +17,7 @@ final _chargeByIdProvider =
 });
 
 class ChargingDetailPage extends ConsumerWidget {
-  const ChargingDetailPage({super.key, required this.chargeId});
+  const ChargingDetailPage({required this.chargeId, super.key});
   final int chargeId;
 
   @override
@@ -56,7 +56,8 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final duration = (charge.stopAt ?? charge.startAt).difference(charge.startAt);
+    final duration =
+        (charge.stopAt ?? charge.startAt).difference(charge.startAt);
     final energy = (charge.startLevel != null &&
             charge.endLevel != null &&
             charge.kw != null)
@@ -157,21 +158,17 @@ class _CurveCard extends StatelessWidget {
                 LineChartData(
                   minY: 0,
                   maxY: 100,
-                  gridData: const FlGridData(show: true),
                   borderData: FlBorderData(show: false),
                   titlesData: const FlTitlesData(
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 32),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 32,
+                      ),
                     ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+                    bottomTitles: AxisTitles(),
+                    topTitles: AxisTitles(),
+                    rightTitles: AxisTitles(),
                   ),
                   lineBarsData: [
                     LineChartBarData(
@@ -182,9 +179,7 @@ class _CurveCard extends StatelessWidget {
                       isCurved: true,
                       barWidth: 3,
                       color: theme.colorScheme.tertiary,
-                      dotData: const FlDotData(show: true),
                       belowBarData: BarAreaData(
-                        show: true,
                         color: theme.colorScheme.tertiary.withAlpha(40),
                       ),
                     ),
@@ -230,8 +225,13 @@ class _Stat extends StatelessWidget {
 
 String _formatDate(DateTime t) {
   final l = t.toLocal();
-  return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')} '
-      '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+  final date =
+      '${l.year}-${l.month.toString().padLeft(2, '0')}'
+      '-${l.day.toString().padLeft(2, '0')}';
+  final time =
+      '${l.hour.toString().padLeft(2, '0')}'
+      ':${l.minute.toString().padLeft(2, '0')}';
+  return '$date $time';
 }
 
 String _formatDuration(Duration d) {

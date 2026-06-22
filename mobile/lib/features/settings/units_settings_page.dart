@@ -18,42 +18,74 @@ class UnitsSettingsPage extends ConsumerWidget {
         data: (prefs) => ListView(
           children: [
             const _SectionHeader(label: 'Distance'),
-            RadioListTile<DistanceUnit>(
-              value: DistanceUnit.kilometers,
+            RadioGroup<DistanceUnit>(
               groupValue: prefs.distance,
-              title: const Text('Kilometres (km)'),
               onChanged: (v) => v == null ? null : controller.setDistance(v),
-            ),
-            RadioListTile<DistanceUnit>(
-              value: DistanceUnit.miles,
-              groupValue: prefs.distance,
-              title: const Text('Miles (mi)'),
-              onChanged: (v) => v == null ? null : controller.setDistance(v),
+              child: const Column(
+                children: [
+                  RadioListTile<DistanceUnit>(
+                    value: DistanceUnit.kilometers,
+                    title: Text('Kilometres (km)'),
+                  ),
+                  RadioListTile<DistanceUnit>(
+                    value: DistanceUnit.miles,
+                    title: Text('Miles (mi)'),
+                  ),
+                ],
+              ),
             ),
             const _SectionHeader(label: 'Temperature'),
-            RadioListTile<TemperatureUnit>(
-              value: TemperatureUnit.celsius,
+            RadioGroup<TemperatureUnit>(
               groupValue: prefs.temperature,
-              title: const Text('Celsius (°C)'),
               onChanged: (v) =>
                   v == null ? null : controller.setTemperature(v),
-            ),
-            RadioListTile<TemperatureUnit>(
-              value: TemperatureUnit.fahrenheit,
-              groupValue: prefs.temperature,
-              title: const Text('Fahrenheit (°F)'),
-              onChanged: (v) =>
-                  v == null ? null : controller.setTemperature(v),
+              child: const Column(
+                children: [
+                  RadioListTile<TemperatureUnit>(
+                    value: TemperatureUnit.celsius,
+                    title: Text('Celsius (°C)'),
+                  ),
+                  RadioListTile<TemperatureUnit>(
+                    value: TemperatureUnit.fahrenheit,
+                    title: Text('Fahrenheit (°F)'),
+                  ),
+                ],
+              ),
             ),
             const _SectionHeader(label: 'Currency'),
-            for (final code in const ['EUR', 'GBP', 'USD', 'CHF', 'SEK', 'NOK'])
-              RadioListTile<String>(
-                value: code,
-                groupValue: prefs.currency,
-                title: Text(code),
-                onChanged: (v) =>
-                    v == null ? null : controller.setCurrency(v),
+            RadioGroup<String>(
+              groupValue: prefs.currency,
+              onChanged: (v) =>
+                  v == null ? null : controller.setCurrency(v),
+              child: const Column(
+                children: [
+                  RadioListTile<String>(
+                    value: 'EUR',
+                    title: Text('EUR'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'GBP',
+                    title: Text('GBP'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'USD',
+                    title: Text('USD'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'CHF',
+                    title: Text('CHF'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'SEK',
+                    title: Text('SEK'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'NOK',
+                    title: Text('NOK'),
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),

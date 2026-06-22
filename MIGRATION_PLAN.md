@@ -212,20 +212,20 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 0.9 | Rewrite root README with new architecture | `docs: rewrite README for direct-to-stellantis mobile app` | [x] 617b0a4 |
 | 0.10 | Mark Phase 0 complete (this commit) | `docs: mark phase 0 complete` | [x] HEAD |
 
-### Phase 1 — Flutter foundation *(~1 day)*
+### Phase 1 — Flutter foundation *(~1 day)* ✅ COMPLETE
 
-| # | Task | Commit |
-|---|---|---|
-| 1.1 | `flutter create mobile --org com.stellantis.app --platforms=android,ios` | `chore: scaffold flutter project` |
-| 1.2 | Add dependencies in `pubspec.yaml` (the locked stack) | `chore: pin dependencies` |
-| 1.3 | Set up `analysis_options.yaml` (very_good_analysis) | `chore: enable strict linting` |
-| 1.4 | Create folder skeleton from §3 | `chore: lay out lib/ structure` |
-| 1.5 | Add Riverpod ProviderScope, go_router shell, MaterialApp.router | `feat: app shell with riverpod + go_router` |
-| 1.6 | Splash screen with neutral Stellantis logo | `feat: splash screen` |
-| 1.7 | Theme infrastructure scaffold (`BrandTheme`, `BrandThemeProvider`) | `feat: brand theme infrastructure` |
-| 1.8 | Logging + error boundary | `feat: structured logging and error boundary` |
-| 1.9 | `codemagic.yaml` with Android + iOS workflows targeting TestFlight + Firebase App Distribution | `chore: ci/cd via codemagic` |
-| 1.10 | `docs/RELEASE.md` documenting build, sign, distribute | `docs: release runbook` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 1.1 | `flutter create mobile --org com.stellantis.app --platforms=android,ios` | `chore: scaffold flutter project` | [x] |
+| 1.2 | Add dependencies in `pubspec.yaml` (the locked stack) | `chore: pin dependencies` | [x] |
+| 1.3 | Set up `analysis_options.yaml` (very_good_analysis) | `chore: enable strict linting` | [x] |
+| 1.4 | Create folder skeleton from §3 | `chore: lay out lib/ structure` | [x] |
+| 1.5 | Add Riverpod ProviderScope, go_router shell, MaterialApp.router | `feat: app shell with riverpod + go_router` | [x] |
+| 1.6 | Splash screen with neutral Stellantis logo | `feat: splash screen` | [x] |
+| 1.7 | Theme infrastructure scaffold (`BrandTheme`, `BrandThemeProvider`) | `feat: brand theme infrastructure` | [x] |
+| 1.8 | Logging + error boundary | `feat: structured logging and error boundary` | [x] |
+| 1.9 | `codemagic.yaml` with Android + iOS workflows targeting TestFlight + Firebase App Distribution | `chore: ci/cd via codemagic` | [x] |
+| 1.10 | `docs/RELEASE.md` documenting build, sign, distribute | `docs: release runbook` | [x] |
 
 ### Phase 2 — Stellantis integration port *(~5 days)*
 

@@ -51,10 +51,10 @@ class _OpenWeatherSettingsPageState
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Stellantis does not always report ambient temperature. '
-                        'Add an OpenWeather API key and the app will fall back '
-                        'to your last known position\'s outdoor temp when the '
-                        'car has not reported one recently.',
+                        'Stellantis does not always report ambient '
+                        'temperature. Add an OpenWeather API key and the app '
+                        "will fall back to your last known position's outdoor "
+                        'temp when the car has not reported one recently.',
                       ),
                     ),
                   ],
@@ -86,11 +86,12 @@ class _OpenWeatherSettingsPageState
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   await ref
                       .read(integrationPrefsControllerProvider.notifier)
                       .setOpenWeatherKey(_controller.text.trim());
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('OpenWeather key saved')),
                   );
                 },

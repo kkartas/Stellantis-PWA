@@ -16,8 +16,8 @@ import 'package:flutter/material.dart';
 /// blur shader compiles slowly.
 class GlassCard extends StatelessWidget {
   const GlassCard({
-    super.key,
     required this.child,
+    super.key,
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = 16,
     this.blurSigma = 18,

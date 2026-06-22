@@ -128,7 +128,7 @@ class _ReminderTile extends StatelessWidget {
             : IconButton(
                 icon: const Icon(Icons.check),
                 tooltip: 'Mark complete',
-                onPressed: () => _markComplete(),
+                onPressed: _markComplete,
               ),
       ),
     );
@@ -174,5 +174,6 @@ class _ReminderTile extends StatelessWidget {
 
 String _formatDate(DateTime t) {
   final l = t.toLocal();
-  return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')}';
+  return '${l.year}-${l.month.toString().padLeft(2, '0')}'
+      '-${l.day.toString().padLeft(2, '0')}';
 }

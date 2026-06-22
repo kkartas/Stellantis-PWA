@@ -38,8 +38,8 @@ class LoadingStateView extends StatelessWidget {
 
 class ErrorStateView extends StatelessWidget {
   const ErrorStateView({
-    super.key,
     required this.message,
+    super.key,
     this.title = 'Something went wrong',
     this.icon = Icons.error_outline,
     this.onRetry,
@@ -91,9 +91,9 @@ class OfflineStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ErrorStateView(
       icon: Icons.cloud_off,
-      title: 'You\'re offline',
+      title: "You're offline",
       message:
-          'We\'re showing the last known state. Reconnect to refresh from '
+          "We're showing the last known state. Reconnect to refresh from "
           'the cloud.',
       onRetry: onRetry,
     );
@@ -102,8 +102,8 @@ class OfflineStateView extends StatelessWidget {
 
 class EmptyStateView extends StatelessWidget {
   const EmptyStateView({
-    super.key,
     required this.message,
+    super.key,
     this.icon = Icons.inbox_outlined,
   });
 

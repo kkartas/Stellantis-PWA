@@ -19,8 +19,8 @@ enum StateLottie {
 
 class StateLottieView extends StatefulWidget {
   const StateLottieView({
-    super.key,
     required this.kind,
+    super.key,
     this.size = 96,
     this.repeat = true,
   });
@@ -53,7 +53,7 @@ class _StateLottieViewState extends State<StateLottieView> {
       child: FutureBuilder<bool>(
         future: _hasAsset,
         builder: (context, snap) {
-          if (snap.data == true) {
+          if (snap.data ?? false) {
             return Lottie.asset(
               widget.kind.asset,
               repeat: widget.repeat,

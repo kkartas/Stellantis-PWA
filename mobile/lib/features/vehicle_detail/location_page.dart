@@ -6,6 +6,7 @@ import 'package:stellantis_mobile/core/ui/glass_card.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/status_snapshot.dart';
 
 class VehicleLocationPage extends ConsumerWidget {
   const VehicleLocationPage({super.key});
@@ -18,7 +19,8 @@ class VehicleLocationPage extends ConsumerWidget {
     final lng = status?.longitude;
 
     final hasPosition = lat != null && lng != null;
-    final center = hasPosition ? LatLng(lat, lng) : const LatLng(48.8566, 2.3522);
+    final center =
+        hasPosition ? LatLng(lat, lng) : const LatLng(48.8566, 2.3522);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Location')),
@@ -46,7 +48,7 @@ class _MapView extends StatelessWidget {
   const _MapView({required this.center, required this.status});
 
   final LatLng center;
-  final dynamic status;
+  final StatusSnapshot status;
 
   @override
   Widget build(BuildContext context) {
@@ -110,13 +112,13 @@ class _PinIcon extends StatelessWidget {
 
 class _AddressCard extends StatelessWidget {
   const _AddressCard({required this.status});
-  final dynamic status;
+  final StatusSnapshot status;
 
   @override
   Widget build(BuildContext context) {
-    final lat = status.latitude as double?;
-    final lng = status.longitude as double?;
-    final ts = status.timestamp as DateTime?;
+    final lat = status.latitude;
+    final lng = status.longitude;
+    final ts = status.timestamp;
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -141,11 +143,10 @@ class _AddressCard extends StatelessWidget {
                   '${lat?.toStringAsFixed(5)}, ${lng?.toStringAsFixed(5)}',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                if (ts != null)
-                  Text(
-                    _formatTimestamp(ts),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                Text(
+                  _formatTimestamp(ts),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),

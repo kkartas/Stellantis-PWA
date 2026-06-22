@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 /// come from the surrounding [Theme].
 class BatteryRing extends StatelessWidget {
   const BatteryRing({
-    super.key,
     required this.percentage,
+    super.key,
     this.size = 140,
     this.label = '%',
     this.subtitle,

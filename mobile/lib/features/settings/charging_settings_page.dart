@@ -24,12 +24,13 @@ class _ChargingSettingsPageState extends ConsumerState<ChargingSettingsPage> {
           if (_draft != null)
             TextButton(
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 await ref
                     .read(chargingPrefsControllerProvider.notifier)
                     .save(_draft!);
                 if (!mounted) return;
                 setState(() => _draft = null);
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Saved')),
                 );
               },

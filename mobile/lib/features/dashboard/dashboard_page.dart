@@ -10,6 +10,7 @@ import 'package:stellantis_mobile/features/dashboard/widgets/hero_card.dart';
 import 'package:stellantis_mobile/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
 import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
+import 'package:stellantis_mobile/stellantis/storage/schemas/status_snapshot.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -62,7 +63,6 @@ class DashboardPage extends ConsumerWidget {
     final charging = status?.chargingStatus == 'inProgress';
 
     return Scaffold(
-      extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('Dashboard'),
         systemOverlayStyle: const SystemUiOverlayStyle(
@@ -133,7 +133,7 @@ class _EnergyRings extends StatelessWidget {
     final hasElectric = electricLevel != null;
 
     if (!hasFuel && !hasElectric) {
-      return BatteryRing(
+      return const BatteryRing(
         percentage: null,
         label: 'No data yet',
         subtitle: 'Pull to refresh',
@@ -170,11 +170,11 @@ class _EnergyRings extends StatelessWidget {
 class _StatsStrip extends StatelessWidget {
   const _StatsStrip({required this.status});
 
-  final dynamic status;
+  final StatusSnapshot? status;
 
   @override
   Widget build(BuildContext context) {
-    final mileage = status?.mileage as double?;
+    final mileage = status?.mileage;
     return Row(
       children: [
         Expanded(
@@ -189,7 +189,7 @@ class _StatsStrip extends StatelessWidget {
           child: _StatCard(
             icon: Icons.access_time,
             label: 'Last sync',
-            value: _formatTimestamp(status?.timestamp as DateTime?),
+            value: _formatTimestamp(status?.timestamp),
           ),
         ),
       ],

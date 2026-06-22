@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 /// [CupertinoTabBar] on iOS so the destination switcher matches platform
 /// conventions while the body content stays Material-themed.
 class AppShell extends StatelessWidget {
-  const AppShell({super.key, required this.navigationShell});
+  const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 

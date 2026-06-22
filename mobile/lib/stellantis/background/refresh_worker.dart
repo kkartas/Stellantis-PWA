@@ -35,7 +35,7 @@ class RefreshWorker {
         _uniqueName,
         _taskName,
         frequency: _refreshInterval,
-        existingWorkPolicy: ExistingWorkPolicy.keep,
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
       );
 
   static Future<void> cancel() =>

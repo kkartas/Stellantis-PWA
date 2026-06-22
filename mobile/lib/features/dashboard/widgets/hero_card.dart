@@ -10,9 +10,9 @@ import 'package:stellantis_mobile/theme/brand_theme.dart';
 /// secondary tokens, with the vehicle label and lock state stacked over it.
 class HeroCard extends ConsumerWidget {
   const HeroCard({
-    super.key,
     required this.vehicle,
     required this.status,
+    super.key,
   });
 
   final VehicleRecord? vehicle;

@@ -85,20 +85,16 @@ class _SohCard extends StatelessWidget {
               height: 180,
               child: LineChart(
                 LineChartData(
-                  gridData: const FlGridData(show: true),
                   titlesData: const FlTitlesData(
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 36),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                      ),
                     ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+                    bottomTitles: AxisTitles(),
+                    topTitles: AxisTitles(),
+                    rightTitles: AxisTitles(),
                   ),
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
@@ -152,20 +148,16 @@ class _ConsumptionCard extends StatelessWidget {
               height: 180,
               child: LineChart(
                 LineChartData(
-                  gridData: const FlGridData(show: true),
                   titlesData: const FlTitlesData(
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 32),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 32,
+                      ),
                     ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+                    bottomTitles: AxisTitles(),
+                    topTitles: AxisTitles(),
+                    rightTitles: AxisTitles(),
                   ),
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
@@ -240,7 +232,7 @@ class _MileageProjectionCard extends StatelessWidget {
               child: _Stat(
                 label: 'Current odo',
                 value: '${maxMileage.toStringAsFixed(0)} km',
-                color: theme.colorScheme.secondary ?? theme.colorScheme.primary,
+                color: theme.colorScheme.secondary,
               ),
             ),
           ],
@@ -279,9 +271,7 @@ class _CostCard extends StatelessWidget {
               child: _Stat(
                 label: 'Lifetime',
                 value: total.toStringAsFixed(2),
-                color:
-                    Theme.of(context).colorScheme.secondary ??
-                        Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.secondary,
               ),
             ),
           ],

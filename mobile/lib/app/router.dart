@@ -1,23 +1,22 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stellantis_mobile/features/auth/brand_picker_page.dart';
 import 'package:stellantis_mobile/features/auth/login_page.dart';
 import 'package:stellantis_mobile/features/auth/otp_setup_page.dart';
 import 'package:stellantis_mobile/features/auth/splash_page.dart';
+import 'package:stellantis_mobile/features/charging/charging_detail_page.dart';
+import 'package:stellantis_mobile/features/charging/charging_page.dart';
 import 'package:stellantis_mobile/features/dashboard/dashboard_page.dart';
-import 'package:stellantis_mobile/features/shell/app_shell.dart';
 import 'package:stellantis_mobile/features/maintenance/maintenance_page.dart';
-import 'package:stellantis_mobile/features/settings/abrp_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/about_settings_page.dart';
+import 'package:stellantis_mobile/features/settings/abrp_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/account_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/charging_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/openweather_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/theme_settings_page.dart';
 import 'package:stellantis_mobile/features/settings/units_settings_page.dart';
+import 'package:stellantis_mobile/features/shell/app_shell.dart';
 import 'package:stellantis_mobile/features/stats/stats_page.dart';
-import 'package:stellantis_mobile/features/charging/charging_detail_page.dart';
-import 'package:stellantis_mobile/features/charging/charging_page.dart';
 import 'package:stellantis_mobile/features/trips/trip_detail_page.dart';
 import 'package:stellantis_mobile/features/trips/trips_page.dart';
 import 'package:stellantis_mobile/features/vehicle_detail/location_page.dart';
@@ -167,5 +166,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-

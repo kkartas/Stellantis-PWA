@@ -107,7 +107,7 @@ class QuickActionController extends Notifier<QuickActionState> {
     }
   }
 
-  /// Mark the current [lastResult] as consumed so the snackbar doesn't fire
+  /// Mark the current lastResult as consumed so the snackbar doesn't fire
   /// again on the next rebuild.
   void acknowledgeLastResult() {
     state = state.copyWith(clearLastResult: true);

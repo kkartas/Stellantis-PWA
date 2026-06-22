@@ -126,7 +126,7 @@ class AccountSettingsPage extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Sign out?'),
         content: const Text(
-          'You\'ll need to sign in again and set up OTP. Trip history and '
+          "You'll need to sign in again and set up OTP. Trip history and "
           'charging sessions stored on this device will be erased.',
         ),
         actions: [

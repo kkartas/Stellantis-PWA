@@ -7,7 +7,6 @@ import 'package:stellantis_mobile/features/dashboard/data/latest_status.dart';
 import 'package:stellantis_mobile/features/shell/wake_refresh_indicator.dart';
 import 'package:stellantis_mobile/features/vehicle_detail/data/live_status.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
-import 'package:stellantis_mobile/stellantis/models/energy.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle_status.dart';
 import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
 import 'package:stellantis_mobile/stellantis/storage/schemas/alert_record.dart';
@@ -62,7 +61,11 @@ class VehicleDetailPage extends ConsumerWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.icon, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
 
   final String title;
   final IconData icon;
@@ -120,7 +123,8 @@ class _DoorsCard extends StatelessWidget {
           _DoorRow(label: 'Rear left', value: opening.rearLeft),
           _DoorRow(label: 'Rear right', value: opening.rearRight),
           _DoorRow(label: 'Trunk', value: opening.trunk),
-          if (opening.hood != null) _DoorRow(label: 'Hood', value: opening.hood),
+          if (opening.hood != null)
+            _DoorRow(label: 'Hood', value: opening.hood),
           if (opening.roofWindow != null)
             _DoorRow(label: 'Sunroof', value: opening.roofWindow),
         ],
@@ -334,7 +338,11 @@ class _AlertsCard extends StatelessWidget {
 }
 
 class _KeyValue extends StatelessWidget {
-  const _KeyValue({required this.label, required this.value, required this.icon});
+  const _KeyValue({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   final String label;
   final String value;

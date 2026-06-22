@@ -17,7 +17,7 @@ final _tripByIdProvider =
 });
 
 class TripDetailPage extends ConsumerWidget {
-  const TripDetailPage({super.key, required this.tripId});
+  const TripDetailPage({required this.tripId, super.key});
   final int tripId;
 
   @override
@@ -225,8 +225,13 @@ class _Stat extends StatelessWidget {
 
 String _formatDate(DateTime t) {
   final l = t.toLocal();
-  return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')} '
-      '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+  final date =
+      '${l.year}-${l.month.toString().padLeft(2, '0')}'
+      '-${l.day.toString().padLeft(2, '0')}';
+  final time =
+      '${l.hour.toString().padLeft(2, '0')}'
+      ':${l.minute.toString().padLeft(2, '0')}';
+  return '$date $time';
 }
 
 String _formatDuration(Duration d) {

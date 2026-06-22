@@ -158,6 +158,10 @@ class _ChargeTile extends StatelessWidget {
     final delta = (charge.startLevel != null && charge.endLevel != null)
         ? charge.endLevel! - charge.startLevel!
         : null;
+    final levelRange = (charge.startLevel != null && charge.endLevel != null)
+        ? '${charge.startLevel!.toStringAsFixed(0)}% → '
+            '${charge.endLevel!.toStringAsFixed(0)}%'
+        : null;
     return Card(
       child: InkWell(
         onTap: () => context.go('/charging/${charge.id}'),
@@ -185,8 +189,7 @@ class _ChargeTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       [
-                        if (charge.startLevel != null && charge.endLevel != null)
-                          '${charge.startLevel!.toStringAsFixed(0)}% → ${charge.endLevel!.toStringAsFixed(0)}%',
+                        if (levelRange != null) levelRange,
                         if (delta != null) '(+${delta.toStringAsFixed(0)}%)',
                         if (charge.chargingMode != null) charge.chargingMode!,
                       ].join(' · '),
@@ -211,6 +214,11 @@ class _ChargeTile extends StatelessWidget {
 
 String _formatDate(DateTime t) {
   final l = t.toLocal();
-  return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')} '
-      '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+  final date =
+      '${l.year}-${l.month.toString().padLeft(2, '0')}'
+      '-${l.day.toString().padLeft(2, '0')}';
+  final time =
+      '${l.hour.toString().padLeft(2, '0')}'
+      ':${l.minute.toString().padLeft(2, '0')}';
+  return '$date $time';
 }

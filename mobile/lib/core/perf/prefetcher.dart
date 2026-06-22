@@ -13,9 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// not a correctness path.
 class Prefetcher extends ConsumerStatefulWidget {
   const Prefetcher({
-    super.key,
     required this.providers,
     required this.child,
+    super.key,
     this.delay = const Duration(seconds: 2),
   });
 

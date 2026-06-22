@@ -20,7 +20,7 @@ const _stateMachineName = 'State';
 ///   - bool input `charging`
 ///   - number input `doorsOpen` (count of open doors, 0–6)
 class HeroCarRive extends ConsumerStatefulWidget {
-  const HeroCarRive({super.key, required this.status, this.height = 160});
+  const HeroCarRive({required this.status, super.key, this.height = 160});
 
   final StatusSnapshot? status;
   final double height;
@@ -31,7 +31,6 @@ class HeroCarRive extends ConsumerStatefulWidget {
 
 class _HeroCarRiveState extends ConsumerState<HeroCarRive> {
   late final Future<bool> _hasAsset = _probeAsset();
-  Artboard? _artboard;
   StateMachineController? _machine;
   SMIBool? _locked;
   SMIBool? _charging;
@@ -55,7 +54,6 @@ class _HeroCarRiveState extends ConsumerState<HeroCarRive> {
     _locked = controller.findInput<bool>('locked') as SMIBool?;
     _charging = controller.findInput<bool>('charging') as SMIBool?;
     _doorsOpen = controller.findInput<double>('doorsOpen') as SMINumber?;
-    _artboard = artboard;
     _pushInputs();
   }
 
@@ -92,7 +90,7 @@ class _HeroCarRiveState extends ConsumerState<HeroCarRive> {
       child: FutureBuilder<bool>(
         future: _hasAsset,
         builder: (context, snap) {
-          if (snap.data == true) {
+          if (snap.data ?? false) {
             return RiveAnimation.asset(
               _heroCarAsset,
               fit: BoxFit.contain,

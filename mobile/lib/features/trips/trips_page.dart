@@ -88,7 +88,7 @@ class TripsPage extends ConsumerWidget {
                   addAutomaticKeepAlives: false,
                   // One repaint boundary per row keeps scroll bursts from
                   // forcing the whole list to repaint.
-                  addRepaintBoundaries: true,
+                  // addRepaintBoundaries defaults to true — omitted.
                   // Pre-build a screen of items ahead so fast flings stay
                   // smooth without paying for the whole list at once.
                   cacheExtent: 600,
@@ -144,7 +144,8 @@ class _TripTile extends StatelessWidget {
                     Text(
                       '${trip.distance.toStringAsFixed(1)} km · '
                       '${_formatDuration(duration)}'
-                      '${trip.consumption == null ? '' : ' · ${trip.consumption!.toStringAsFixed(1)} kWh/100km'}',
+                      '${trip.consumption == null ? '' : ' · '
+                          '${trip.consumption!.toStringAsFixed(1)} kWh/100km'}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -213,7 +214,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             title: const Text('Minimum distance (km)'),
             subtitle: Slider(
               value: _draft.minDistanceKm,
-              min: 0,
               max: 500,
               divisions: 50,
               label: '${_draft.minDistanceKm.toStringAsFixed(0)} km',
@@ -254,8 +254,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
 String _formatDate(DateTime t) {
   final l = t.toLocal();
-  return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')} '
-      '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+  final date =
+      '${l.year}-${l.month.toString().padLeft(2, '0')}'
+      '-${l.day.toString().padLeft(2, '0')}';
+  final time =
+      '${l.hour.toString().padLeft(2, '0')}'
+      ':${l.minute.toString().padLeft(2, '0')}';
+  return '$date $time';
 }
 
 String _formatDuration(Duration d) {

@@ -49,7 +49,9 @@ class _AbrpSettingsPageState extends ConsumerState<AbrpSettingsPage> {
                 child: SwitchListTile(
                   value: _enabled,
                   title: const Text('Enable ABRP forwarding'),
-                  subtitle: const Text('Requires a user token from abetterrouteplanner.com'),
+                  subtitle: const Text(
+                    'Requires a user token from abetterrouteplanner.com',
+                  ),
                   onChanged: (v) => setState(() => _enabled = v),
                 ),
               ),
@@ -78,6 +80,7 @@ class _AbrpSettingsPageState extends ConsumerState<AbrpSettingsPage> {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   await ref
                       .read(integrationPrefsControllerProvider.notifier)
                       .setAbrp(
@@ -85,7 +88,7 @@ class _AbrpSettingsPageState extends ConsumerState<AbrpSettingsPage> {
                         token: _tokenController.text.trim(),
                       );
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('ABRP settings saved')),
                   );
                 },

@@ -28,78 +28,81 @@ class ThemeSettingsPage extends ConsumerWidget {
           ),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text('Appearance', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              'Appearance',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          RadioListTile<ThemeMode>(
-            value: ThemeMode.system,
+          RadioGroup<ThemeMode>(
             groupValue: themeMode,
-            title: const Text('Match system'),
-            secondary: const Icon(Icons.brightness_auto),
-            onChanged: (v) => v == null
-                ? null
-                : ref
-                    .read(themeModeControllerProvider.notifier)
-                    .set(v),
-          ),
-          RadioListTile<ThemeMode>(
-            value: ThemeMode.light,
-            groupValue: themeMode,
-            title: const Text('Light'),
-            secondary: const Icon(Icons.light_mode_outlined),
-            onChanged: (v) => v == null
-                ? null
-                : ref
-                    .read(themeModeControllerProvider.notifier)
-                    .set(v),
-          ),
-          RadioListTile<ThemeMode>(
-            value: ThemeMode.dark,
-            groupValue: themeMode,
-            title: const Text('Dark'),
-            secondary: const Icon(Icons.dark_mode_outlined),
-            onChanged: (v) => v == null
-                ? null
-                : ref
-                    .read(themeModeControllerProvider.notifier)
-                    .set(v),
+            onChanged: (v) {
+              if (v == null) return;
+              ref.read(themeModeControllerProvider.notifier).set(v);
+            },
+            child: const Column(
+              children: [
+                RadioListTile<ThemeMode>(
+                  value: ThemeMode.system,
+                  title: Text('Match system'),
+                  secondary: Icon(Icons.brightness_auto),
+                ),
+                RadioListTile<ThemeMode>(
+                  value: ThemeMode.light,
+                  title: Text('Light'),
+                  secondary: Icon(Icons.light_mode_outlined),
+                ),
+                RadioListTile<ThemeMode>(
+                  value: ThemeMode.dark,
+                  title: Text('Dark'),
+                  secondary: Icon(Icons.dark_mode_outlined),
+                ),
+              ],
+            ),
           ),
           const Divider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text('Brand', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              'Brand',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          RadioListTile<Brand?>(
-            value: null,
+          RadioGroup<Brand?>(
             groupValue: override,
-            title: const Text('Auto (match vehicle brand)'),
-            secondary: const Icon(Icons.auto_awesome),
             onChanged: (_) {
               ref.read(brandOverrideProvider.notifier).state = null;
               ref.read(brandThemeProvider.notifier).state = BrandTheme.neutral;
             },
+            child: const RadioListTile<Brand?>(
+              value: null,
+              title: Text('Auto (match vehicle brand)'),
+              secondary: Icon(Icons.auto_awesome),
+            ),
           ),
           const Divider(),
           for (final entry in BrandTheme.perBrand.entries)
-            RadioListTile<Brand>(
-              value: entry.key,
+            RadioGroup<Brand>(
               groupValue: override,
-              title: Text(_brandLabel(entry.key)),
-              secondary: SizedBox(
-                width: 32,
-                height: 32,
-                child: SvgPicture.asset(
-                  entry.value.logoAsset,
-                  colorFilter: ColorFilter.mode(
-                    entry.value.primary,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
               onChanged: (v) {
                 if (v == null) return;
                 ref.read(brandOverrideProvider.notifier).state = v;
                 ref.read(brandThemeProvider.notifier).state = entry.value;
               },
+              child: RadioListTile<Brand>(
+                value: entry.key,
+                title: Text(_brandLabel(entry.key)),
+                secondary: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: SvgPicture.asset(
+                    entry.value.logoAsset,
+                    colorFilter: ColorFilter.mode(
+                      entry.value.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
