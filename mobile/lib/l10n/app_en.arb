@@ -1,0 +1,58 @@
+{
+  "@@locale": "en",
+  "appTitle": "Stellantis",
+  "@appTitle": {
+    "description": "Application name shown in the OS task switcher"
+  },
+  "navDashboard": "Dashboard",
+  "@navDashboard": {
+    "description": "Bottom navigation label for the dashboard tab"
+  },
+  "navTrips": "Trips",
+  "navCharging": "Charging",
+  "navStats": "Stats",
+  "navSettings": "Settings",
+  "actionLock": "Lock",
+  "actionUnlock": "Unlock",
+  "actionClimate": "Climate",
+  "actionCharge": "Charge",
+  "actionRetry": "Retry",
+  "actionRefresh": "Refresh",
+  "actionLogout": "Log out",
+  "statusCharging": "Charging",
+  "statusRange": "Range",
+  "statusMileage": "Mileage",
+  "rangeKm": "{value} km",
+  "@rangeKm": {
+    "description": "Driving range in kilometres",
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "batteryPercent": "{value}%",
+  "@batteryPercent": {
+    "description": "Battery state of charge as a percentage",
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
+  "errorTitle": "Something went wrong",
+  "errorOfflineTitle": "You're offline",
+  "errorOfflineMessage": "We're showing the last known state. Reconnect to refresh from the cloud.",
+  "emptyTrips": "No trips recorded yet.",
+  "emptyCharging": "No charging sessions yet.",
+  "lastRefreshed": "Last refreshed {time}",
+  "@lastRefreshed": {
+    "description": "Relative timestamp of the last successful sync",
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "tripsCount": "{count, plural, =0{No trips} =1{1 trip} other{{count} trips}}",
+  "@tripsCount": {
+    "description": "Number of trips in the current filter",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
+}

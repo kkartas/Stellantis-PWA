@@ -1,0 +1,19 @@
+# Shorebird code-push configuration.
+#
+# The app_id below is a PLACEHOLDER. Generate a real one by running:
+#
+#   cd mobile && shorebird init
+#
+# which provisions the app on the Shorebird console and rewrites this file
+# with the real UUID. Until then, `shorebird release`/`shorebird patch` will
+# refuse to run. Do not invent a UUID by hand — it must match the console.
+#
+# Rotation note: Shorebird is the hotpatch path for rotated brand secrets
+# (see docs/SECURITY.md §2) — a patch ships a new secrets.dart without a
+# store-review cycle.
+
+app_id: REPLACE_WITH_SHOREBIRD_INIT
+
+# Check for and download patches automatically on launch (default behaviour).
+# A patch only applies on the next cold start, never mid-session.
+auto_update: true

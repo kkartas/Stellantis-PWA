@@ -1,0 +1,9 @@
+# Configuration for `flutter gen-l10n`.
+# Generated Dart is emitted into the source tree (lib/l10n) and imported
+# directly — the synthetic package:flutter_gen path is no longer used.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

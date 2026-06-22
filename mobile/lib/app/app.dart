@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/app/router.dart';
 import 'package:stellantis_mobile/features/settings/data/theme_mode_preference.dart';
+import 'package:stellantis_mobile/l10n/app_localizations.dart';
 import 'package:stellantis_mobile/theme/brand_theme.dart';
 
 /// Root application widget.
@@ -16,10 +17,12 @@ class StellantisApp extends ConsumerWidget {
         ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.system;
 
     return MaterialApp.router(
-      title: 'Stellantis',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: brand.lightTheme,
       darkTheme: brand.darkTheme,
       themeMode: themeMode,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     );
   }

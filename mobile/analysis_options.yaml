@@ -4,6 +4,7 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.mapper.dart"
+    - "lib/l10n/app_localizations*.dart"
 
 linter:
   rules:
