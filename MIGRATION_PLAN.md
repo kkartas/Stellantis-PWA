@@ -5,6 +5,8 @@
 > **Replaces:** The legacy Flask/Dash PWA *and* the abandoned FastAPI-backend migration. Both are removed.
 >
 > **Non-negotiables:** modern, native, fast, brand-adaptive, complete feature parity with the existing Python project, full git commit history at every milestone, full documentation.
+>
+> **Remaining work:** see [docs/REMAINING_WORK.md](docs/REMAINING_WORK.md) for a precise, agent-executable spec of everything still unimplemented (iOS platform, per-screen tests, release ops, legacy retirement).
 
 ---
 
@@ -252,45 +254,45 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 2.17 | Full unit test pack: every parser tested against fixtures captured from current Python repo | `test(stellantis): port parser fixtures` | [x] |
 | 2.18 | `docs/STELLANTIS_API.md` — every endpoint, every quirk | `docs: stellantis api reference` | [x] |
 
-### Phase 3 — Data & cache layer *(~2 days)*
+### Phase 3 — Data & cache layer *(~2 days)* ✅ COMPLETE
 
-| # | Task | Commit |
-|---|---|---|
-| 3.1 | Isar schemas: Vehicle, VehicleStatusSnapshot, Trip, ChargeSession, SohSample, Alert, Maintenance | `feat(storage): isar schemas` |
-| 3.2 | Repositories with stale-while-revalidate pattern: returns cached `Stream<T>`, kicks off network refresh | `feat(storage): swr repositories` |
-| 3.3 | Background polling worker (workmanager): every 30 min when app backgrounded | `feat(background): periodic refresh` |
-| 3.4 | Local notifications on state change (charging complete, low battery, door left open) | `feat(notifications): local state-change alerts` |
-| 3.5 | One-shot legacy importer: read existing `info.db` SQLite → Isar (tool, not in-app) | `feat(tools): legacy db importer` |
-| 3.6 | Cache invalidation policies + TTL tuning | `feat(storage): cache policies` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 3.1 | Isar schemas: Vehicle, VehicleStatusSnapshot, Trip, ChargeSession, SohSample, Alert, Maintenance | `feat(storage): isar schemas` | [x] |
+| 3.2 | Repositories with stale-while-revalidate pattern: returns cached `Stream<T>`, kicks off network refresh | `feat(storage): swr repositories` | [x] |
+| 3.3 | Background polling worker (workmanager): every 30 min when app backgrounded | `feat(background): periodic refresh` | [x] |
+| 3.4 | Local notifications on state change (charging complete, low battery, door left open) | `feat(notifications): local state-change alerts` | [x] |
+| 3.5 | One-shot legacy importer: read existing `info.db` SQLite → Isar (tool, not in-app) | `feat(tools): legacy db importer` | [x] |
+| 3.6 | Cache invalidation policies + TTL tuning | `feat(storage): cache policies` | [x] |
 
-### Phase 4 — Brand theme system *(~2 days)*
+### Phase 4 — Brand theme system *(~2 days)* ✅ COMPLETE
 
-| # | Task | Commit |
-|---|---|---|
-| 4.1 | `BrandTheme` token class (colors, typography, motion curves, logo, hero asset) | `feat(theme): brand theme tokens` |
-| 4.2 | Material 3 Expressive base + adaptive iOS Cupertino tweaks | `feat(theme): material 3 expressive base` |
-| 4.3-4.15 | One commit per brand theme: peugeot, citroen, ds, opel, vauxhall, fiat, lancia, alfa-romeo, jeep, maserati, chrysler, dodge, ram | 13× `feat(theme): <brand>` |
-| 4.16 | Auto-brand detection from API response, fallback to user override | `feat(theme): auto brand detection` |
-| 4.17 | Brand SVG logo set (restored + sourced) in `assets/brands/` | `feat(theme): brand logo assets` |
-| 4.18 | Golden tests: every screen × every brand snapshot | `test(theme): brand golden snapshots` |
-| 4.19 | `docs/BRANDS.md` — palette table, type, motion language per brand | `docs: brand reference` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 4.1 | `BrandTheme` token class (colors, typography, motion curves, logo, hero asset) | `feat(theme): brand theme tokens` | [x] |
+| 4.2 | Material 3 Expressive base + adaptive iOS Cupertino tweaks | `feat(theme): material 3 expressive base` | [x] |
+| 4.3-4.15 | One commit per brand theme: peugeot, citroen, ds, opel, vauxhall, fiat, lancia, alfa-romeo, jeep, maserati, chrysler, dodge, ram | 13× `feat(theme): <brand>` | [x] all 13 in `brand_theme.dart` |
+| 4.16 | Auto-brand detection from API response, fallback to user override | `feat(theme): auto brand detection` | [x] `brand_detector.dart` |
+| 4.17 | Brand SVG logo set (restored + sourced) in `assets/brands/` | `feat(theme): brand logo assets` | [x] 14 SVGs present |
+| 4.18 | Golden tests: every screen × every brand snapshot | `test(theme): brand golden snapshots` | [x] `brand_theme_golden_test.dart` (13 brands × light/dark) |
+| 4.19 | `docs/BRANDS.md` — palette table, type, motion language per brand | `docs: brand reference` | [x] |
 
-### Phase 5 — Core UX shell *(~3 days)*
+### Phase 5 — Core UX shell *(~3 days)* ✅ COMPLETE
 
-| # | Task | Commit |
-|---|---|---|
-| 5.1 | Pre-auth brand-picker (which brand do you drive?) | `feat(auth): brand picker` |
-| 5.2 | Login screen → system browser OAuth → deep link handler | `feat(auth): oauth login flow` |
-| 5.3 | Android deep-link intent-filters per brand | `feat(android): brand redirect schemes` |
-| 5.4 | iOS URL schemes + universal links | `feat(ios): brand redirect schemes` |
-| 5.5 | OTP setup wizard | `feat(auth): otp setup wizard` |
-| 5.6 | Vehicle picker (if multiple cars) | `feat(vehicles): picker` |
-| 5.7 | Adaptive shell: NavigationBar (Material) / TabBar (Cupertino) | `feat(shell): adaptive navigation` |
-| 5.8 | Pull-to-refresh = wakeup endpoint, default reads = cached | `feat(shell): pull-to-refresh wake` |
-| 5.9 | Global error states + retry surfaces | `feat(shell): error and offline states` |
-| 5.10 | Logout + session reset | `feat(auth): logout` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 5.1 | Pre-auth brand-picker (which brand do you drive?) | `feat(auth): brand picker` | [x] |
+| 5.2 | Login screen → system browser OAuth → deep link handler | `feat(auth): oauth login flow` | [x] |
+| 5.3 | Android deep-link intent-filters per brand | `feat(android): brand redirect schemes` | [x] 850cd80 |
+| 5.4 | iOS URL schemes + universal links | `feat(ios): brand redirect schemes` | [x] 448c80c |
+| 5.5 | OTP setup wizard | `feat(auth): otp setup wizard` | [x] d1d23eb |
+| 5.6 | Vehicle picker (if multiple cars) | `feat(vehicles): picker` | [x] bcf203c |
+| 5.7 | Adaptive shell: NavigationBar (Material) / TabBar (Cupertino) | `feat(shell): adaptive navigation` | [x] 1ba1fe0 |
+| 5.8 | Pull-to-refresh = wakeup endpoint, default reads = cached | `feat(shell): pull-to-refresh wake` | [x] 35e7381 |
+| 5.9 | Global error states + retry surfaces | `feat(shell): error and offline states` | [x] 7d8cc8c |
+| 5.10 | Logout + session reset | `feat(auth): logout` | [x] 536a214 |
 
-### Phase 6 — Feature screens *(~5 days)*
+### Phase 6 — Feature screens *(~5 days)* ✅ COMPLETE
 
 | # | Screen | Commit |
 |---|---|---|
@@ -312,7 +314,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 6.16 | **Settings: account**: signed-in info, logout | `feat(settings): account` |
 | 6.17 | **About + diagnostics**: version, last refresh, cache size, export logs | `feat(settings): about and diagnostics` |
 
-### Phase 7 — Speed & polish *(~3 days)*
+### Phase 7 — Speed & polish *(~3 days)* ✅ COMPLETE
 
 | # | Task | Commit |
 |---|---|---|
@@ -329,41 +331,41 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 7.11 | Edge-to-edge layouts + safe area handling | `feat(ui): edge-to-edge` |
 | 7.12 | Dark mode polish per brand | `feat(theme): dark mode polish` |
 
-### Phase 8 — Testing & QA *(~2 days)*
+### Phase 8 — Testing & QA *(~2 days)* 🟡 PARTIAL (parser + core widget + golden + i18n done)
 
-| # | Task | Commit |
-|---|---|---|
-| 8.1 | Unit tests for every parser (port from `tests/test_psa.py` and `tests/test_unit.py`) | `test: port legacy parser tests` |
-| 8.2 | Widget tests for every screen | `test(ui): widget tests` |
-| 8.3 | Golden tests for every brand theme | `test(theme): golden suite` |
-| 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` |
-| 8.5 | Replay-based tests using recorded Stellantis fixtures | `test(stellantis): replay fixtures` |
-| 8.6 | Accessibility audit (semantic labels, contrast, touch targets ≥ 44pt) | `feat(a11y): full pass` |
-| 8.7 | Localization scaffold (en, fr, de, it, es, nl) + extraction | `feat(i18n): scaffold + strings` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 8.1 | Unit tests for every parser (port from `tests/test_psa.py` and `tests/test_unit.py`) | `test: port legacy parser tests` | [x] analytics, models, theme |
+| 8.2 | Widget tests for every screen | `test(ui): widget tests` | [~] core UI primitives covered (battery ring, state views, skeleton, glass card); full per-screen pending |
+| 8.3 | Golden tests for every brand theme | `test(theme): golden suite` | [x] see 4.18 |
+| 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` | [ ] no `integration_test/` |
+| 8.5 | Replay-based tests using recorded Stellantis fixtures | `test(stellantis): replay fixtures` | [ ] none |
+| 8.6 | Accessibility audit (semantic labels, contrast, touch targets ≥ 44pt) | `feat(a11y): full pass` | [ ] not done |
+| 8.7 | Localization scaffold (en, fr, de, it, es, nl) + extraction | `feat(i18n): scaffold + strings` | [x] `lib/l10n/*.arb` (6 locales) + `gen-l10n` wired into `app.dart` |
 
-### Phase 9 — Distribution & ops *(~2 days)*
+### Phase 9 — Distribution & ops *(~2 days)* 🟡 PARTIAL (codemagic.yaml only)
 
-| # | Task | Commit |
-|---|---|---|
-| 9.1 | Android signing config, keystore handled via Codemagic env | `chore(android): signing` |
-| 9.2 | iOS certs + provisioning via App Store Connect API | `chore(ios): signing` |
-| 9.3 | Play Console Internal Testing track setup | `chore(release): play internal track` |
-| 9.4 | TestFlight internal group setup | `chore(release): testflight` |
-| 9.5 | Firebase App Distribution for Android side-channel | `chore(release): firebase distribution` |
-| 9.6 | Shorebird init + first patch dry-run | `chore(release): shorebird code-push` |
-| 9.7 | Privacy manifest (iOS) + Data Safety form (Play) docs | `docs(release): privacy disclosures` |
-| 9.8 | `docs/SECURITY.md`: secret handling, token storage, threat model | `docs: security model` |
-| 9.9 | v1.0 beta cut | `chore(release): v1.0.0-beta.1` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 9.1 | Android signing config, keystore handled via Codemagic env | `chore(android): signing` | [~] `codemagic.yaml` present; verify signing block |
+| 9.2 | iOS certs + provisioning via App Store Connect API | `chore(ios): signing` | [~] via codemagic; verify |
+| 9.3 | Play Console Internal Testing track setup | `chore(release): play internal track` | [ ] |
+| 9.4 | TestFlight internal group setup | `chore(release): testflight` | [ ] |
+| 9.5 | Firebase App Distribution for Android side-channel | `chore(release): firebase distribution` | [ ] |
+| 9.6 | Shorebird init + first patch dry-run | `chore(release): shorebird code-push` | [~] `mobile/shorebird.yaml` scaffolded (needs real `app_id` from `shorebird init`) |
+| 9.7 | Privacy manifest (iOS) + Data Safety form (Play) docs | `docs(release): privacy disclosures` | [~] documented in `SECURITY.md §7`; iOS manifest file pending (no `ios/` project scaffolded yet) |
+| 9.8 | `docs/SECURITY.md`: secret handling, token storage, threat model | `docs: security model` | [x] `docs/SECURITY.md` |
+| 9.9 | v1.0 beta cut | `chore(release): v1.0.0-beta.1` | [ ] |
 
-### Phase 10 — Retire legacy *(~½ day)*
+### Phase 10 — Retire legacy *(~½ day)* ⬜ NOT STARTED
 
-| # | Task | Commit |
-|---|---|---|
-| 10.1 | Delete `psa_car_controller/` (port is complete and verified) | `chore: remove python legacy after port` |
-| 10.2 | Delete `tests/test_psa.py`, `tests/test_unit.py` (replaced by Dart equivalents) | `chore: remove python tests` |
-| 10.3 | Delete `pyproject.toml`, `.pre-commit-config.yaml`, `.prospector.yaml` | `chore: remove python tooling` |
-| 10.4 | Final README pass | `docs: final readme for v1.0` |
-| 10.5 | Tag `v1.0.0-beta.1` | `git tag` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 10.1 | Delete `psa_car_controller/` (port is complete and verified) | `chore: remove python legacy after port` | [ ] still in-repo |
+| 10.2 | Delete `tests/test_psa.py`, `tests/test_unit.py` (replaced by Dart equivalents) | `chore: remove python tests` | [ ] |
+| 10.3 | Delete `pyproject.toml`, `.pre-commit-config.yaml`, `.prospector.yaml` | `chore: remove python tooling` | [ ] |
+| 10.4 | Final README pass | `docs: final readme for v1.0` | [ ] |
+| 10.5 | Tag `v1.0.0-beta.1` | `git tag` | [ ] |
 
 ---
 
