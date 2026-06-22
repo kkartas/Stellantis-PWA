@@ -4,10 +4,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
+import 'package:stellantis_mobile/l10n/app_localizations.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) {
   return tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: child)),
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: child),
+    ),
   );
 }
 

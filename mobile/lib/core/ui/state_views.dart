@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:stellantis_mobile/l10n/app_localizations.dart';
 
 /// Shared visual primitives for the three "non-happy-path" states every
 /// feature screen needs:
@@ -40,12 +41,13 @@ class ErrorStateView extends StatelessWidget {
   const ErrorStateView({
     required this.message,
     super.key,
-    this.title = 'Something went wrong',
+    this.title,
     this.icon = Icons.error_outline,
     this.onRetry,
   });
 
-  final String title;
+  /// Defaults to the localized "Something went wrong" when null.
+  final String? title;
   final String message;
   final IconData icon;
   final VoidCallback? onRetry;
@@ -53,6 +55,7 @@ class ErrorStateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -61,7 +64,7 @@ class ErrorStateView extends StatelessWidget {
           children: [
             Icon(icon, size: 56, color: theme.colorScheme.error),
             const SizedBox(height: 12),
-            Text(title, style: theme.textTheme.titleLarge),
+            Text(title ?? l10n.errorTitle, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
               message,
@@ -72,7 +75,7 @@ class ErrorStateView extends StatelessWidget {
               const SizedBox(height: 16),
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: const Text('Retry'),
+                child: Text(l10n.actionRetry),
               ),
             ],
           ],
@@ -89,12 +92,11 @@ class OfflineStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ErrorStateView(
       icon: Icons.cloud_off,
-      title: "You're offline",
-      message:
-          "We're showing the last known state. Reconnect to refresh from "
-          'the cloud.',
+      title: l10n.errorOfflineTitle,
+      message: l10n.errorOfflineMessage,
       onRetry: onRetry,
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stellantis_mobile/l10n/app_localizations.dart';
 
 /// Top-level navigation shell. Renders a [NavigationBar] on Android and a
 /// [CupertinoTabBar] on iOS so the destination switcher matches platform
@@ -10,38 +11,26 @@ class AppShell extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const _destinations = <_ShellDestination>[
-    _ShellDestination(
-      label: 'Dashboard',
-      icon: Icons.home_filled,
-      cupertinoIcon: CupertinoIcons.house_fill,
-    ),
-    _ShellDestination(
-      label: 'Trips',
-      icon: Icons.route_outlined,
-      cupertinoIcon: CupertinoIcons.map,
-    ),
-    _ShellDestination(
-      label: 'Charging',
-      icon: Icons.bolt,
-      cupertinoIcon: CupertinoIcons.bolt_fill,
-    ),
-    _ShellDestination(
-      label: 'Stats',
-      icon: Icons.bar_chart,
-      cupertinoIcon: CupertinoIcons.chart_bar_fill,
-    ),
-    _ShellDestination(
-      label: 'Settings',
-      icon: Icons.settings_outlined,
-      cupertinoIcon: CupertinoIcons.settings,
-    ),
+  static const _icons = <_ShellIcon>[
+    _ShellIcon(Icons.home_filled, CupertinoIcons.house_fill),
+    _ShellIcon(Icons.route_outlined, CupertinoIcons.map),
+    _ShellIcon(Icons.bolt, CupertinoIcons.bolt_fill),
+    _ShellIcon(Icons.bar_chart, CupertinoIcons.chart_bar_fill),
+    _ShellIcon(Icons.settings_outlined, CupertinoIcons.settings),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
     final body = navigationShell;
+    final l10n = AppLocalizations.of(context);
+    final labels = <String>[
+      l10n.navDashboard,
+      l10n.navTrips,
+      l10n.navCharging,
+      l10n.navStats,
+      l10n.navSettings,
+    ];
 
     if (isIos) {
       return Scaffold(
@@ -50,10 +39,10 @@ class AppShell extends StatelessWidget {
           currentIndex: navigationShell.currentIndex,
           onTap: _go,
           items: [
-            for (final d in _destinations)
+            for (var i = 0; i < _icons.length; i++)
               BottomNavigationBarItem(
-                icon: Icon(d.cupertinoIcon),
-                label: d.label,
+                icon: Icon(_icons[i].cupertino),
+                label: labels[i],
               ),
           ],
         ),
@@ -66,10 +55,10 @@ class AppShell extends StatelessWidget {
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: _go,
         destinations: [
-          for (final d in _destinations)
+          for (var i = 0; i < _icons.length; i++)
             NavigationDestination(
-              icon: Icon(d.icon),
-              label: d.label,
+              icon: Icon(_icons[i].material),
+              label: labels[i],
             ),
         ],
       ),
@@ -85,16 +74,11 @@ class AppShell extends StatelessWidget {
   }
 }
 
-class _ShellDestination {
-  const _ShellDestination({
-    required this.label,
-    required this.icon,
-    required this.cupertinoIcon,
-  });
+class _ShellIcon {
+  const _ShellIcon(this.material, this.cupertino);
 
-  final String label;
-  final IconData icon;
-  final IconData cupertinoIcon;
+  final IconData material;
+  final IconData cupertino;
 }
 
 /// Settings root — every entry below is its own sub-route under /settings.
