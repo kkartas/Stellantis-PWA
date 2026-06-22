@@ -353,7 +353,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 9.4 | TestFlight internal group setup | `chore(release): testflight` | [ ] |
 | 9.5 | Firebase App Distribution for Android side-channel | `chore(release): firebase distribution` | [ ] |
 | 9.6 | Shorebird init + first patch dry-run | `chore(release): shorebird code-push` | [~] `mobile/shorebird.yaml` scaffolded (needs real `app_id` from `shorebird init`) |
-| 9.7 | Privacy manifest (iOS) + Data Safety form (Play) docs | `docs(release): privacy disclosures` | [~] documented in `SECURITY.md §7`; iOS manifest file pending (no `ios/` project scaffolded yet) |
+| 9.7 | Privacy manifest (iOS) + Data Safety form (Play) docs | `docs(release): privacy disclosures` | [x] `ios/Runner/PrivacyInfo.xcprivacy` (wired into Runner target) + `SECURITY.md §7`; Play Data Safety still a console step |
 | 9.8 | `docs/SECURITY.md`: secret handling, token storage, threat model | `docs: security model` | [x] `docs/SECURITY.md` |
 | 9.9 | v1.0 beta cut | `chore(release): v1.0.0-beta.1` | [ ] |
 

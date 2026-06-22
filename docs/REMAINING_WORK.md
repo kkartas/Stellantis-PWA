@@ -183,7 +183,15 @@ this is the genuine 5.4; update its status note.
 
 ---
 
-## 3. iOS privacy manifest (plan 9.7)
+## 3. iOS privacy manifest (plan 9.7) — ✅ DONE
+
+> Implemented: [`ios/Runner/PrivacyInfo.xcprivacy`](../mobile/ios/Runner/PrivacyInfo.xcprivacy)
+> created and wired into the Runner target (PBXFileReference + PBXBuildFile +
+> group + Resources phase, ids `F1F1F1F101000000000000A1/A2`). Declares precise
+> location + diagnostic data (linked, non-tracking, AppFunctionality) and the
+> UserDefaults (`CA92.1`) / FileTimestamp (`C617.1`) required-reason APIs.
+> Original instructions retained below.
+
 
 Create `ios/Runner/PrivacyInfo.xcprivacy` (a plist) and add it to the Runner
 target's "Copy Bundle Resources" build phase (edit `project.pbxproj` or add via
