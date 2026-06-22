@@ -1,0 +1,25 @@
+{
+  "_embedded": {
+    "vehicles": [
+      {
+        "id": "1234567890abcdef",
+        "vin": "VR3UHZKXZNT000001",
+        "label": "e-208",
+        "brand": "Peugeot",
+        "pictures": [
+          "https://cdn.example.test/peugeot-e208-front.png",
+          "https://cdn.example.test/peugeot-e208-side.png"
+        ]
+      },
+      {
+        "id": "fedcba0987654321",
+        "vin": "VF7XYZ00000000002",
+        "label": "C4",
+        "brand": "Citroen",
+        "pictures": [
+          "https://cdn.example.test/citroen-c4.png"
+        ]
+      }
+    ]
+  }
+}

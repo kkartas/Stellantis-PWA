@@ -1,0 +1,34 @@
+{
+  "total": 2,
+  "_embedded": {
+    "alerts": [
+      {
+        "id": "0a9de72cc3803b12a74418acd20dcd66",
+        "active": true,
+        "type": "TyrePressureLow",
+        "severity": "Warning",
+        "createdAt": "2026-06-20T08:15:00Z",
+        "updatedAt": "2026-06-20T08:15:00Z",
+        "startedAt": "2026-06-20T08:14:30Z",
+        "startPosition": {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [4.835659, 45.764043, 180.0]
+          },
+          "properties": {
+            "updatedAt": "2026-06-20T08:14:30Z"
+          }
+        }
+      },
+      {
+        "id": "b1c2d3e4f5",
+        "active": false,
+        "type": "EngineOilPressureFailure",
+        "severity": "Critical",
+        "startedAt": "2026-06-18T10:00:00Z",
+        "endAt": "2026-06-18T11:00:00Z"
+      }
+    ]
+  }
+}

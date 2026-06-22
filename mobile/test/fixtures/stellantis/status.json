@@ -1,0 +1,73 @@
+{
+  "energy": [
+    {
+      "type": "Electric",
+      "level": 72.0,
+      "autonomy": 210.0,
+      "residual": 36.0,
+      "updatedAt": "2026-06-22T08:00:00Z",
+      "battery": {
+        "capacity": 50000.0,
+        "health": {
+          "capacity": 47000.0,
+          "resistance": 12.0,
+          "state": "Good"
+        }
+      },
+      "charging": {
+        "status": "InProgress",
+        "plugged": true,
+        "chargingMode": "Slow",
+        "chargingRate": 12,
+        "remainingTime": "PT1H30M",
+        "nextDelayedTime": "PT0S"
+      }
+    },
+    {
+      "type": "Fuel",
+      "level": 0.0,
+      "consumption": 0.0
+    }
+  ],
+  "doorsState": {
+    "lockedStates": "Locked",
+    "opening": {
+      "frontLeft": "Closed",
+      "frontRight": "Closed",
+      "rearLeft": "Closed",
+      "rearRight": "Closed",
+      "trunk": "Closed",
+      "hood": "Closed"
+    }
+  },
+  "ignition": {
+    "type": "Stop"
+  },
+  "kinetic": {
+    "moving": false,
+    "speed": 0.0
+  },
+  "lastPosition": {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [4.835659, 45.764043, 180.0]
+    },
+    "properties": {
+      "heading": 90.0,
+      "moving": false,
+      "signalQuality": 3,
+      "updatedAt": "2026-06-22T07:59:00Z"
+    }
+  },
+  "preconditioning": {
+    "airConditioning": {
+      "status": "Disabled",
+      "updatedAt": "2026-06-22T07:50:00Z"
+    }
+  },
+  "odometer": {
+    "mileage": 12345.6,
+    "updatedAt": "2026-06-22T08:00:00Z"
+  }
+}
