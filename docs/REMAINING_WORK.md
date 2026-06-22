@@ -330,7 +330,17 @@ referenced in `app_en.arb` are actually used in code; `flutter analyze` clean.
 
 ---
 
-## 7. Patrol E2E happy path (plan 8.4)
+## 7. Patrol E2E happy path (plan 8.4) — 🟡 PARTIAL
+
+> Implemented the E2E **boot flow** through the real router two ways:
+> [`integration_test/app_boot_test.dart`](../mobile/integration_test/app_boot_test.dart)
+> (device runner, `flutter test integration_test`) and a headless verifiable
+> twin at `test/integration/app_boot_test.dart` (runs under `flutter test`).
+> Both drive splash → first-run route → brand picker with an empty secure
+> store. **Still pending (needs a device/emulator):** the patrol wrapper for
+> native OAuth and the login → dashboard → command leg. Original instructions
+> below.
+
 
 1. Add `patrol` to `dev_dependencies` and create `integration_test/`.
 2. Configure `patrol` per its docs (`patrol_cli`, native test runners for both

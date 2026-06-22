@@ -46,6 +46,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   golden_toolkit: ^0.15.0
+  integration_test:
+    sdk: flutter
   isar_generator: ^3.1.0
   mocktail: ^1.0.4
   riverpod_generator: ^2.4.0

@@ -338,7 +338,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 8.1 | Unit tests for every parser (port from `tests/test_psa.py` and `tests/test_unit.py`) | `test: port legacy parser tests` | [x] analytics, models, theme |
 | 8.2 | Widget tests for every screen | `test(ui): widget tests` | [x] 21/22 screens (settings, auth, dashboard, vehicle, trips, charging, stats, maintenance, detail pages) + core primitives; splash deferred to E2E |
 | 8.3 | Golden tests for every brand theme | `test(theme): golden suite` | [x] see 4.18 |
-| 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` | [ ] no `integration_test/` |
+| 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` | [~] `integration_test/app_boot_test.dart` (device) + headless `test/integration/` boot-flow through the real router; patrol/native + command leg pending a device |
 | 8.5 | Replay-based tests using recorded Stellantis fixtures | `test(stellantis): replay fixtures` | [x] `test/fixtures/stellantis/*.json` + model-parse and `VehiclesApi` fake-adapter replay tests |
 | 8.6 | Accessibility audit (semantic labels, contrast, touch targets ≥ 44pt) | `feat(a11y): full pass` | [~] guideline tests (tap-target + labelling) for dashboard/settings; added missing tooltip; contrast reviewed via goldens |
 | 8.7 | Localization scaffold (en, fr, de, it, es, nl) + extraction | `feat(i18n): scaffold + strings` | [x] `lib/l10n/*.arb` (6 locales) + `gen-l10n` wired into `app.dart`; shared widgets (nav shell, state views) localized; per-screen strings ongoing |
