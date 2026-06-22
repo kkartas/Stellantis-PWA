@@ -167,6 +167,50 @@ Key response fields used by the app:
 | `lastPosition.geometry.coordinates` | `TripPoint.latitude/longitude` | [lon, lat] order |
 | `lastPosition.properties.updatedAt` | `TripPoint.timestamp` | ISO-8601 UTC |
 
+### 3.3 Vehicle alerts
+
+```
+GET https://api.groupe-psa.com/applications/cvs/v4
+    /vehicles/{vin}/alerts
+    ?client_id={client_id}
+Authorization: Bearer {access_token}
+```
+
+Returns a HAL collection (`Alerts`); the active alerts live under
+`_embedded.alerts`. Mapped to `AlertModel` (`lib/stellantis/models/alert.dart`).
+
+| JSON path | Dart field | Notes |
+|---|---|---|
+| `_embedded.alerts[]` | `AlertsResponse.alerts.alerts` | empty when no active alerts |
+| `…[].id` | `AlertModel.id` | stable per-alert identifier |
+| `…[].type` | `AlertModel.type` | raw `AlertMsgEnum` string (e.g. `TyrePressureLow`); kept as `String` because the set is large and brand-dependent |
+| `…[].severity` | `AlertModel.severity` | `Information` / `Warning` / `Critical` → `AlertSeverity`; unknown values fall back to `AlertSeverity.unknown` |
+| `…[].active` | `AlertModel.active` | `false` once resolved |
+| `…[].startedAt` / `endAt` | `AlertModel.startedAt/endAt` | ISO-8601 UTC; `endAt` present only when resolved |
+| `…[].startPosition` / `endPosition` | `AlertModel.startPosition/endPosition` | reuses `PositionModel` |
+
+**Quirk:** the field is `endAt` (no `ed`), unlike most other timestamps.
+
+### 3.4 Maintenance
+
+```
+GET https://api.groupe-psa.com/applications/cvs/v4
+    /vehicles/{vin}/maintenance
+    ?client_id={client_id}
+Authorization: Bearer {access_token}
+```
+
+Mapped to `MaintenanceModel` (`lib/stellantis/models/maintenance.dart`).
+
+| JSON path | Dart field | Notes |
+|---|---|---|
+| `daysBeforeMaintenance` | `MaintenanceModel.daysBeforeMaintenance` | int; **negative when overdue** |
+| `mileageBeforeMaintenance` | `MaintenanceModel.mileageBeforeMaintenance` | float (km); negative when overdue |
+| `createdAt` / `updatedAt` | `MaintenanceModel.createdAt/updatedAt` | ISO-8601 UTC |
+
+**Quirk:** at least one of the two figures is always present, but not
+necessarily both. `MaintenanceModel.isOverdue` is true when either is negative.
+
 ---
 
 ## 4. Analytics Models

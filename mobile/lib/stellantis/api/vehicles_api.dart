@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/core/perf/json_isolate.dart';
+import 'package:stellantis_mobile/stellantis/models/alert.dart';
+import 'package:stellantis_mobile/stellantis/models/maintenance.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle_status.dart';
 import 'package:stellantis_mobile/stellantis/network/psa_http_client.dart';
@@ -123,6 +125,71 @@ class VehiclesApi {
     }
 
     return null;
+  }
+
+  /// Returns the latest active alerts for the vehicle identified by
+  /// [vehicleId]. Returns an empty list when none are present or on failure.
+  Future<List<AlertModel>> getVehicleAlerts({
+    required String vehicleId,
+    required String clientId,
+    required String realm,
+  }) async {
+    final headers = _authHeaders(clientId, realm);
+
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/user/vehicles/$vehicleId/alerts',
+        queryParameters: {'client_id': clientId},
+        options: Options(headers: headers),
+      );
+
+      final data = response.data;
+      if (data == null) return [];
+
+      final parsed = AlertsResponseMapper.fromMap(data);
+      final alerts = parsed.alerts?.alerts ?? [];
+      _log.i('Loaded ${alerts.length} alert(s) for $vehicleId');
+      return alerts;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403) rethrow;
+      _log.w('getVehicleAlerts failed (status=$status)');
+      return [];
+    } on MapperException catch (e) {
+      _log.e('getVehicleAlerts parse error', e);
+      return [];
+    }
+  }
+
+  /// Returns the next-maintenance details for the vehicle identified by
+  /// [vehicleId], or null when unavailable.
+  Future<MaintenanceModel?> getVehicleMaintenance({
+    required String vehicleId,
+    required String clientId,
+    required String realm,
+  }) async {
+    final headers = _authHeaders(clientId, realm);
+
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/user/vehicles/$vehicleId/maintenance',
+        queryParameters: {'client_id': clientId},
+        options: Options(headers: headers),
+      );
+
+      final data = response.data;
+      if (data == null) return null;
+
+      return MaintenanceModelMapper.fromMap(data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403) rethrow;
+      _log.w('getVehicleMaintenance failed (status=$status)');
+      return null;
+    } on MapperException catch (e) {
+      _log.e('getVehicleMaintenance parse error', e);
+      return null;
+    }
   }
 
   static Map<String, String> _authHeaders(String clientId, String realm) => {

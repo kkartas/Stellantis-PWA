@@ -227,30 +227,30 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 1.9 | `codemagic.yaml` with Android + iOS workflows targeting TestFlight + Firebase App Distribution | `chore: ci/cd via codemagic` | [x] |
 | 1.10 | `docs/RELEASE.md` documenting build, sign, distribute | `docs: release runbook` | [x] |
 
-### Phase 2 — Stellantis integration port *(~5 days)*
+### Phase 2 — Stellantis integration port *(~5 days)* ✅ COMPLETE
 
 > Goal: replicate everything `psa_car_controller/psa/` and `psa_car_controller/psacc/` do, in Dart, with tests, screen-free.
 
-| # | Task | Commit |
-|---|---|---|
-| 2.1 | Dart CLI tool `tools/extract_secrets/` mirroring `app_decoder.py` — outputs `lib/stellantis/brands/secrets.dart` (gitignored) and a public `secrets_template.dart` | `feat(tools): apk secret extractor` |
-| 2.2 | Per-brand constants (redirect URI, base URLs, MQTT broker) | `feat(stellantis): brand constants` |
-| 2.3 | OAuth2 PKCE flow with `flutter_web_auth_2` for the system browser | `feat(stellantis): oauth2 pkce login` |
-| 2.4 | Token refresh interceptor on dio | `feat(stellantis): token refresh interceptor` |
-| 2.5 | Persistent HTTP/2 dio client w/ keep-alive, connection pooling | `feat(network): persistent http2 client` |
-| 2.6 | dart_mappable models generated for vehicles, status, trips, energy, position, alerts, maintenance (from `api-b2c.yaml`) | `feat(stellantis): typed api models` |
-| 2.7 | REST client: GET /vehicles, GET /status, POST /refresh | `feat(stellantis): vehicles api` |
-| 2.8 | OTP service: SMS request + complete, derive remote credentials | `feat(stellantis): otp setup` |
-| 2.9 | MQTT client: connect, subscribe, publish, command building | `feat(stellantis): mqtt command client` |
-| 2.10 | Each command: lock, unlock, climate-on/off, charge-on/off, horn, lights, wake-up — one commit each | 8× `feat(commands): <name>` |
-| 2.11 | VIN → model resolver loading `car_models.yml` asset | `feat(stellantis): vin model lookup` |
-| 2.12 | Trip parser ported from `trip_parser.py` | `feat(stellantis): trip parser` |
-| 2.13 | Charging parser + price calculator | `feat(stellantis): charging parser` |
-| 2.14 | Battery SOH + charge curve port | `feat(stellantis): battery analytics` |
-| 2.15 | Ecomix emissions port | `feat(stellantis): emissions estimator` |
-| 2.16 | ABRP push integration | `feat(stellantis): abrp integration` |
-| 2.17 | Full unit test pack: every parser tested against fixtures captured from current Python repo | `test(stellantis): port parser fixtures` |
-| 2.18 | `docs/STELLANTIS_API.md` — every endpoint, every quirk | `docs: stellantis api reference` |
+| # | Task | Commit | Status |
+|---|---|---|---|
+| 2.1 | Dart CLI tool `tools/extract_secrets/` mirroring `app_decoder.py` — outputs `lib/stellantis/brands/secrets.dart` (gitignored) and a public `secrets_template.dart` | `feat(tools): apk secret extractor` | [x] |
+| 2.2 | Per-brand constants (redirect URI, base URLs, MQTT broker) | `feat(stellantis): brand constants` | [x] |
+| 2.3 | OAuth2 PKCE flow with `flutter_web_auth_2` for the system browser | `feat(stellantis): oauth2 pkce login` | [x] |
+| 2.4 | Token refresh interceptor on dio | `feat(stellantis): token refresh interceptor` | [x] |
+| 2.5 | Persistent HTTP/2 dio client w/ keep-alive, connection pooling | `feat(network): persistent http2 client` | [x] |
+| 2.6 | dart_mappable models generated for vehicles, status, trips, energy, position, alerts, maintenance (from `api-b2c.yaml`) | `feat(stellantis): typed api models` | [x] |
+| 2.7 | REST client: GET /vehicles, GET /status, GET /alerts, GET /maintenance (wake-up handled via MQTT, see 2.10) | `feat(stellantis): vehicles api` | [x] |
+| 2.8 | OTP service: SMS request + complete, derive remote credentials | `feat(stellantis): otp setup` | [x] |
+| 2.9 | MQTT client: connect, subscribe, publish, command building | `feat(stellantis): mqtt command client` | [x] |
+| 2.10 | Each command: lock, unlock, climate-on/off, charge-on/off, horn, lights, wake-up | `feat(commands): <name>` | [x] |
+| 2.11 | VIN → model resolver loading `car_models.yml` asset | `feat(stellantis): vin model lookup` | [x] |
+| 2.12 | Trip parser ported from `trip_parser.py` | `feat(stellantis): trip parser` | [x] |
+| 2.13 | Charging parser + price calculator | `feat(stellantis): charging parser` | [x] |
+| 2.14 | Battery SOH + charge curve port | `feat(stellantis): battery analytics` | [x] |
+| 2.15 | Ecomix emissions port | `feat(stellantis): emissions estimator` | [x] |
+| 2.16 | ABRP push integration | `feat(stellantis): abrp integration` | [x] |
+| 2.17 | Full unit test pack: every parser tested against fixtures captured from current Python repo | `test(stellantis): port parser fixtures` | [x] |
+| 2.18 | `docs/STELLANTIS_API.md` — every endpoint, every quirk | `docs: stellantis api reference` | [x] |
 
 ### Phase 3 — Data & cache layer *(~2 days)*
 
