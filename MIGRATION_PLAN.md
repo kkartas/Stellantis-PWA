@@ -340,7 +340,7 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 8.3 | Golden tests for every brand theme | `test(theme): golden suite` | [x] see 4.18 |
 | 8.4 | Integration tests with patrol (E2E happy path: login → dashboard → command) | `test(e2e): happy path` | [ ] no `integration_test/` |
 | 8.5 | Replay-based tests using recorded Stellantis fixtures | `test(stellantis): replay fixtures` | [x] `test/fixtures/stellantis/*.json` + model-parse and `VehiclesApi` fake-adapter replay tests |
-| 8.6 | Accessibility audit (semantic labels, contrast, touch targets ≥ 44pt) | `feat(a11y): full pass` | [ ] not done |
+| 8.6 | Accessibility audit (semantic labels, contrast, touch targets ≥ 44pt) | `feat(a11y): full pass` | [~] guideline tests (tap-target + labelling) for dashboard/settings; added missing tooltip; contrast reviewed via goldens |
 | 8.7 | Localization scaffold (en, fr, de, it, es, nl) + extraction | `feat(i18n): scaffold + strings` | [x] `lib/l10n/*.arb` (6 locales) + `gen-l10n` wired into `app.dart`; shared widgets (nav shell, state views) localized; per-screen strings ongoing |
 
 ### Phase 9 — Distribution & ops *(~2 days)* 🟡 PARTIAL (codemagic.yaml only)
