@@ -57,12 +57,22 @@
 
 ---
 
-## 1. iOS platform — **does not exist yet** (highest priority)
+## 1. iOS platform — ✅ ALREADY EXISTS (corrected)
 
-**Problem:** there is no `mobile/ios/` directory. The project was only
-scaffolded for Android. Plan rows 1.1, 5.4, 9.2, 9.4 are marked done but have
-no iOS platform behind them. Until this exists, `flutter build ipa` and the
-Codemagic `ios-release` workflow cannot run.
+> **Correction (2026-06-23):** an earlier audit wrongly concluded `mobile/ios/`
+> was missing. It is in fact committed (`c051a41 chore: scaffold flutter
+> project`, `448c80c feat(ios): brand redirect schemes`), already targets iOS
+> 13.0, and carries the brand URL schemes. The only real defect was a bundle-id
+> mismatch with CI, fixed below. The scaffolding sub-steps in this section are
+> retained for reference but are **already satisfied** — do not re-run
+> `flutter create --platforms=ios` (it strips the Android entry from
+> `.metadata` and drops a stray default `test/widget_test.dart`).
+
+**Applied fix:** [`codemagic.yaml`](../codemagic.yaml) referenced
+`com.stellantis.app` for both platforms, which matches neither native project.
+Corrected to the real identifiers — Android
+`com.stellantis.app.stellantis_mobile`, iOS `com.stellantis.app.stellantisMobile`
+— and set the iOS `CFBundleDisplayName` to `Stellantis`.
 
 **Canonical identifiers (use exactly these):**
 - Org: `com.stellantis.app`
@@ -113,7 +123,15 @@ In `ios/Runner/Info.plist`:
 
 ---
 
-## 2. iOS brand redirect schemes (plan 5.4 — the real implementation)
+## 2. iOS brand redirect schemes — ✅ ALREADY DONE
+
+> The five schemes are already registered in
+> [`Info.plist`](../mobile/ios/Runner/Info.plist) `CFBundleURLTypes` (committed
+> in `448c80c`). They are grouped under one `CFBundleURLName`
+> (`com.stellantis.app.oauth`) rather than one dict per brand — functionally
+> identical for `ASWebAuthenticationSession`, which matches on the scheme
+> string. No change required. The original instructions below are retained for
+> reference only.
 
 Mirror the Android intent-filters in
 [`AndroidManifest.xml`](../mobile/android/app/src/main/AndroidManifest.xml)

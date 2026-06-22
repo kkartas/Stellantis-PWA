@@ -7,7 +7,7 @@ workflows:
       android_signing:
         - stellantis_keystore     # defined in Codemagic app settings
       vars:
-        PACKAGE_NAME: com.stellantis.app
+        PACKAGE_NAME: com.stellantis.app.stellantis_mobile
     scripts:
       - name: Get dependencies
         script: cd mobile && flutter pub get
@@ -34,9 +34,9 @@ workflows:
       flutter: stable
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.stellantis.app
+        bundle_identifier: com.stellantis.app.stellantisMobile
       vars:
-        BUNDLE_ID: com.stellantis.app
+        BUNDLE_ID: com.stellantis.app.stellantisMobile
     scripts:
       - name: Get dependencies
         script: cd mobile && flutter pub get
