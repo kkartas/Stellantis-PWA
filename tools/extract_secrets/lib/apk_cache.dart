@@ -30,6 +30,22 @@ class BrandEntry {
   final String clientSecret;
 }
 
+/// Normalizes the brand portion of a cache key. The Python app_decoder keys
+/// entries by APK filename (e.g. "mypeugeot.apk"), but the Flutter app looks
+/// up credentials by [Brand] enum name (e.g. "peugeot"). Strip the leading
+/// "my" and trailing ".apk" so the two agree. Keys already in plain
+/// "<brand>" form pass through unchanged.
+String _normalizeBrand(String raw) {
+  var brand = raw.toLowerCase().trim();
+  if (brand.endsWith('.apk')) {
+    brand = brand.substring(0, brand.length - '.apk'.length);
+  }
+  if (brand.startsWith('my')) {
+    brand = brand.substring('my'.length);
+  }
+  return brand;
+}
+
 /// Reads the APK setup cache JSON produced by the Python app_decoder and
 /// returns one [BrandEntry] per valid entry.
 ///
@@ -72,7 +88,7 @@ List<BrandEntry> loadCache(String path) {
     }
 
     final parts = key.split(':');
-    final brand = parts[0].toLowerCase();
+    final brand = _normalizeBrand(parts[0]);
     final country = parts.length > 1 ? parts[1].toUpperCase() : 'XX';
 
     entries.add(

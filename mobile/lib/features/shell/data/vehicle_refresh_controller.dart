@@ -5,7 +5,7 @@ import 'package:stellantis_mobile/features/vehicle_detail/data/live_status.dart'
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets_template.dart';
+import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle_status.dart';
 import 'package:stellantis_mobile/stellantis/mqtt/mqtt_client_service.dart';
 import 'package:stellantis_mobile/stellantis/mqtt/remote_command.dart';

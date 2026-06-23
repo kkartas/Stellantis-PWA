@@ -9,7 +9,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/stellantis/auth/oauth_token.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets_template.dart';
+import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
 
 const _scopes =
     'openid profile data:vehicle:devices:pnc data:trip data:position';
@@ -20,6 +20,19 @@ const _pkceVerifierLength = 64;
 final oauthServiceProvider = Provider<OAuthService>(
   (ref) => OAuthService(ref.watch(authStorageProvider)),
 );
+
+/// Thrown when no OAuth client credentials are configured for the selected
+/// brand+country. Surfaces a clear message instead of opening the browser to
+/// an IDP error page. Populate secrets.dart via tools/extract_secrets.
+class MissingBrandCredentialsException implements Exception {
+  const MissingBrandCredentialsException(this.cacheKey);
+
+  final String cacheKey;
+
+  @override
+  String toString() =>
+      'MissingBrandCredentialsException: no OAuth credentials for $cacheKey';
+}
 
 class OAuthService {
   OAuthService(this._storage);
@@ -39,8 +52,11 @@ class OAuthService {
     final clientId = BrandSecrets.clientId[cacheKey] ?? '';
     final clientSecret = BrandSecrets.clientSecret[cacheKey] ?? '';
 
-    final redirectUri =
-        '$scheme://oauth2redirect/${countryCode.toLowerCase()}';
+    if (clientId.isEmpty) {
+      throw MissingBrandCredentialsException(cacheKey);
+    }
+
+    final redirectUri = '$scheme://oauth2redirect/${countryCode.toLowerCase()}';
 
     final (verifier, challenge) = _generatePkce();
     final state = _randomBase64Url(16);

@@ -6,7 +6,7 @@ import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/stellantis/auth/oauth_token.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets_template.dart';
+import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
 
 const _log = AppLogger('TokenRefresh');
 

@@ -8,7 +8,7 @@ import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets_template.dart';
+import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
 import 'package:stellantis_mobile/stellantis/storage/schemas/vehicle_record.dart';
