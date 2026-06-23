@@ -6,7 +6,7 @@ import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/stellantis/auth/oauth_token.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
+import 'package:stellantis_mobile/stellantis/brands/brand_credentials.dart';
 
 const _log = AppLogger('TokenRefresh');
 
@@ -139,24 +139,21 @@ class TokenRefreshInterceptor extends Interceptor {
     final stored = _cachedToken ?? await _storage.load();
     if (stored == null) throw StateError('No stored token to refresh');
 
-    // We need the client credentials — look up from BrandSecrets.
-    // Iterate all known cache keys to find one that might match.
+    // We need the client credentials — resolve at the brand level. The
+    // client_id/secret are brand-global, so any extracted country entry for a
+    // brand works regardless of the user's market.
     String? tokenUrl;
     String? clientId;
     String? clientSecret;
 
     for (final brand in Brand.values) {
-      for (final cc in ['FR', 'DE', 'GB', 'ES', 'IT', 'NL', 'BE']) {
-        final key = '${brand.name}:$cc';
-        final id = BrandSecrets.clientId[key];
-        if (id != null && id.isNotEmpty) {
-          tokenUrl = BrandConstants.tokenUrl[brand];
-          clientId = id;
-          clientSecret = BrandSecrets.clientSecret[key];
-          break;
-        }
+      final id = BrandCredentials.clientId('${brand.name}:');
+      if (id != null && id.isNotEmpty) {
+        tokenUrl = BrandConstants.tokenUrl[brand];
+        clientId = id;
+        clientSecret = BrandCredentials.clientSecret('${brand.name}:');
+        break;
       }
-      if (tokenUrl != null) break;
     }
 
     if (tokenUrl == null || clientId == null || clientSecret == null) {

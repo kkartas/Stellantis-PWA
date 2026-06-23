@@ -9,7 +9,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:stellantis_mobile/stellantis/auth/auth_storage.dart';
 import 'package:stellantis_mobile/stellantis/auth/oauth_token.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
+import 'package:stellantis_mobile/stellantis/brands/brand_credentials.dart';
 
 const _scopes =
     'openid profile data:vehicle:devices:pnc data:trip data:position';
@@ -49,8 +49,8 @@ class OAuthService {
     final authorizeUrl = BrandConstants.authorizeUrl[brand]!;
     final tokenUrl = BrandConstants.tokenUrl[brand]!;
     final cacheKey = '${brand.name}:${countryCode.toUpperCase()}';
-    final clientId = BrandSecrets.clientId[cacheKey] ?? '';
-    final clientSecret = BrandSecrets.clientSecret[cacheKey] ?? '';
+    final clientId = BrandCredentials.clientId(cacheKey) ?? '';
+    final clientSecret = BrandCredentials.clientSecret(cacheKey) ?? '';
 
     if (clientId.isEmpty) {
       throw MissingBrandCredentialsException(cacheKey);

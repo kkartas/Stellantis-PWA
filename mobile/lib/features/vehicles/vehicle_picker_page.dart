@@ -8,7 +8,7 @@ import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
-import 'package:stellantis_mobile/stellantis/brands/secrets.dart';
+import 'package:stellantis_mobile/stellantis/brands/brand_credentials.dart';
 import 'package:stellantis_mobile/stellantis/models/vehicle.dart';
 import 'package:stellantis_mobile/stellantis/storage/repositories.dart';
 import 'package:stellantis_mobile/stellantis/storage/schemas/vehicle_record.dart';
@@ -21,7 +21,7 @@ final _fetchedVehiclesProvider =
     FutureProvider<List<VehicleModel>>((ref) async {
   final session = ref.watch(selectedBrandSessionProvider);
   if (session == null) return const [];
-  final clientId = BrandSecrets.clientId[session.cacheKey] ?? '';
+  final clientId = BrandCredentials.clientId(session.cacheKey) ?? '';
   final realm = BrandConstants.realm[session.brand] ?? '';
   final api = ref.watch(vehiclesApiProvider);
   final vehicles = await api.getVehicles(clientId: clientId, realm: realm);

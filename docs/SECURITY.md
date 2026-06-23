@@ -28,9 +28,18 @@ credentials, and grant nothing without a user's own OAuth login. Mitigation is
 
 ## 2. Brand secrets (client_id / client_secret / inWebo site codes)
 
-- Extracted once from the official APK by
+- Extracted once **per brand** from that brand's single worldwide APK by
   [`tools/extract_secrets/`](../tools/extract_secrets) into
   `mobile/lib/stellantis/brands/secrets.dart`.
+- **`client_id` / `client_secret` are brand-global, not per-market.** They are
+  embedded in the brand's one global APK and authenticate that brand's users in
+  every country (confirmed against the legacy decoder — see
+  [LEGACY_AUDIT.md §1.2/1.3](LEGACY_AUDIT.md)). Only the inWebo fields
+  (`site_code` / `culture` / `host_brandid_prod`) are country-specific.
+  `BrandSecrets` keys every map by `<brand>:<COUNTRY>` only because those
+  country fields share the maps; client credentials are resolved at the **brand
+  level** by [`brand_credentials.dart`](../mobile/lib/stellantis/brands/brand_credentials.dart),
+  so extracting one country's APK per brand covers all of that brand's markets.
 - That file is **gitignored** and must never be committed. The repo ships only
   [`secrets_template.dart`](../mobile/lib/stellantis/brands/secrets_template.dart)
   with empty values. CI injects the real file from an encrypted environment
