@@ -357,15 +357,21 @@ Each commit message ends with `Co-Authored-By: Claude Opus 4.7 <noreply@anthropi
 | 9.8 | `docs/SECURITY.md`: secret handling, token storage, threat model | `docs: security model` | [x] `docs/SECURITY.md` |
 | 9.9 | v1.0 beta cut | `chore(release): v1.0.0-beta.1` | [~] procedure documented in `RELEASE.md`; tag pending final QA on devices |
 
-### Phase 10 — Retire legacy *(~½ day)* ⬜ NOT STARTED
+### Phase 10 — Retire legacy *(~½ day)* ⬜ DEFERRED (by decision, 2026-06-23)
+
+> Deliberately deferred until device/emulator QA confirms parity — the port is
+> functionally complete and the API shape is preserved by the replay fixtures
+> (`mobile/test/fixtures/stellantis/`), but "verified" requires on-device QA
+> that cannot run on the current host. `psa_car_controller/` stays as the
+> reference until then. Deletion is a clean, reversible git step when ready.
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| 10.1 | Delete `psa_car_controller/` (port is complete and verified) | `chore: remove python legacy after port` | [ ] still in-repo |
-| 10.2 | Delete `tests/test_psa.py`, `tests/test_unit.py` (replaced by Dart equivalents) | `chore: remove python tests` | [ ] |
-| 10.3 | Delete `pyproject.toml`, `.pre-commit-config.yaml`, `.prospector.yaml` | `chore: remove python tooling` | [ ] |
-| 10.4 | Final README pass | `docs: final readme for v1.0` | [ ] |
-| 10.5 | Tag `v1.0.0-beta.1` | `git tag` | [ ] |
+| 10.1 | Delete `psa_car_controller/` (port is complete and verified) | `chore: remove python legacy after port` | [ ] deferred — pending device QA |
+| 10.2 | Delete `tests/test_psa.py`, `tests/test_unit.py` (replaced by Dart equivalents) | `chore: remove python tests` | [ ] deferred |
+| 10.3 | Delete `pyproject.toml`, `.pre-commit-config.yaml`, `.prospector.yaml` | `chore: remove python tooling` | [ ] deferred |
+| 10.4 | Final README pass | `docs: final readme for v1.0` | [ ] deferred |
+| 10.5 | Tag `v1.0.0-beta.1` | `git tag` | [ ] deferred — pending device QA |
 
 ---
 
