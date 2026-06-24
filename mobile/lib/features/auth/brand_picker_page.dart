@@ -19,13 +19,31 @@ const _authenticatableBrands = <Brand>[
 /// Country options offered for the auth flow. Driven by BrandSecrets keys
 /// in tools/extract_secrets — keep aligned when new countries are added.
 const _countries = <_Country>[
+  _Country('AT', 'Austria'),
+  _Country('BE', 'Belgium'),
+  _Country('HR', 'Croatia'),
+  _Country('CZ', 'Czechia'),
+  _Country('DK', 'Denmark'),
+  _Country('FI', 'Finland'),
   _Country('FR', 'France'),
   _Country('DE', 'Germany'),
-  _Country('GB', 'United Kingdom'),
-  _Country('ES', 'Spain'),
+  _Country('GR', 'Greece'),
+  _Country('HU', 'Hungary'),
+  _Country('IE', 'Ireland'),
   _Country('IT', 'Italy'),
+  _Country('LU', 'Luxembourg'),
   _Country('NL', 'Netherlands'),
-  _Country('BE', 'Belgium'),
+  _Country('NO', 'Norway'),
+  _Country('PL', 'Poland'),
+  _Country('PT', 'Portugal'),
+  _Country('RO', 'Romania'),
+  _Country('SK', 'Slovakia'),
+  _Country('SI', 'Slovenia'),
+  _Country('ES', 'Spain'),
+  _Country('SE', 'Sweden'),
+  _Country('CH', 'Switzerland'),
+  _Country('TR', 'Turkey'),
+  _Country('GB', 'United Kingdom'),
 ];
 
 class BrandPickerPage extends ConsumerStatefulWidget {
@@ -44,66 +62,68 @@ class _BrandPickerPageState extends ConsumerState<BrandPickerPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Choose your brand')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Which car brand do you drive?',
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'We support Peugeot, Citroën, DS, Opel and Vauxhall accounts.',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.4,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Which car brand do you drive?',
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'We support Peugeot, Citroën, DS, Opel and Vauxhall accounts.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.4,
+                  ),
+                  itemCount: _authenticatableBrands.length,
+                  itemBuilder: (context, index) {
+                    final brand = _authenticatableBrands[index];
+                    final brandTheme =
+                        BrandTheme.perBrand[brand] ?? BrandTheme.neutral;
+                    final selected = _brand == brand;
+                    return _BrandTile(
+                      brand: brand,
+                      theme: brandTheme,
+                      selected: selected,
+                      onTap: () => setState(() => _brand = brand),
+                    );
+                  },
                 ),
-                itemCount: _authenticatableBrands.length,
-                itemBuilder: (context, index) {
-                  final brand = _authenticatableBrands[index];
-                  final brandTheme =
-                      BrandTheme.perBrand[brand] ?? BrandTheme.neutral;
-                  final selected = _brand == brand;
-                  return _BrandTile(
-                    brand: brand,
-                    theme: brandTheme,
-                    selected: selected,
-                    onTap: () => setState(() => _brand = brand),
-                  );
-                },
               ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _country,
-              decoration: const InputDecoration(
-                labelText: 'Country',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _country,
+                decoration: const InputDecoration(
+                  labelText: 'Country',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final c in _countries)
+                    DropdownMenuItem(value: c.code, child: Text(c.label)),
+                ],
+                onChanged: (v) => setState(() => _country = v ?? 'FR'),
               ),
-              items: [
-                for (final c in _countries)
-                  DropdownMenuItem(value: c.code, child: Text(c.label)),
-              ],
-              onChanged: (v) => setState(() => _country = v ?? 'FR'),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _brand == null ? null : _onContinue,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 14),
-                child: Text('Continue'),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: _brand == null ? null : _onContinue,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Text('Continue'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -157,14 +177,7 @@ class _BrandTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset(
-                theme.logoAsset,
-                height: 36,
-                colorFilter: ColorFilter.mode(
-                  selected ? theme.onPrimary : theme.onSurface,
-                  BlendMode.srcIn,
-                ),
-              ),
+              SvgPicture.asset(theme.logoAsset, height: 36),
               const SizedBox(height: 8),
               Text(
                 _labelFor(brand),

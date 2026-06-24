@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:stellantis_mobile/core/logging/logger.dart';
 import 'package:stellantis_mobile/core/ui/skeleton.dart';
 import 'package:stellantis_mobile/core/ui/state_views.dart';
 import 'package:stellantis_mobile/features/auth/data/brand_session.dart';
+import 'package:stellantis_mobile/features/shell/data/vehicle_refresh_controller.dart';
 import 'package:stellantis_mobile/features/vehicles/data/selected_vehicle.dart';
 import 'package:stellantis_mobile/stellantis/api/vehicles_api.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
@@ -112,6 +115,12 @@ class VehiclePickerPage extends ConsumerWidget {
     _log.i('Selected vehicle ${vehicle.vin}');
     await ref.read(selectedVehicleStoreProvider).save(vehicle.vin);
     ref.read(selectedVinProvider.notifier).state = vehicle.vin;
+    // Kick off an initial wake + status fetch so the dashboard shows live
+    // data right after sign-in instead of the empty "pull to refresh" state.
+    // Fire-and-forget: the controller holds its own provider ref, so the work
+    // survives this widget being disposed by the navigation below, and the
+    // dashboard's cached-status stream repaints once the snapshot lands.
+    unawaited(ref.read(vehicleRefreshControllerProvider).wakeAndRefresh());
     if (!context.mounted) return;
     context.go('/');
   }

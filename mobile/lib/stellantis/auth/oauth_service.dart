@@ -11,8 +11,14 @@ import 'package:stellantis_mobile/stellantis/auth/oauth_token.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_constants.dart';
 import 'package:stellantis_mobile/stellantis/brands/brand_credentials.dart';
 
-const _scopes =
-    'openid profile data:vehicle:devices:pnc data:trip data:position';
+/// Scopes requested at authorization time.
+///
+/// The data scopes (`data:vehicle:devices:pnc`, `data:trip`, `data:position`)
+/// are "out of 1st release scope" on the Stellantis IDP and are rejected with
+/// `invalid_scope` for current B2C clients. We request only the scopes the
+/// provider actually grants — matching the legacy desktop handler's fallback
+/// (tools/windows_mymap_handler.py) and docs/STELLANTIS_API.md.
+const _scopes = 'openid profile';
 
 /// Minimum PKCE verifier length in characters (spec: 43–128).
 const _pkceVerifierLength = 64;
@@ -32,6 +38,24 @@ class MissingBrandCredentialsException implements Exception {
   @override
   String toString() =>
       'MissingBrandCredentialsException: no OAuth credentials for $cacheKey';
+}
+
+/// Thrown when the OAuth provider redirects back with an error instead of an
+/// authorization code (e.g. `invalid_scope`, user declined consent). Unlike a
+/// bare [StateError], this is an [Exception] so UI `on Exception` handlers can
+/// catch it and surface the provider's message instead of crashing silently.
+class OAuthException implements Exception {
+  const OAuthException(this.error, [this.description]);
+
+  /// The `error` query parameter from the callback (e.g. `invalid_scope`).
+  final String error;
+
+  /// The human-readable `error_description`, if the provider supplied one.
+  final String? description;
+
+  @override
+  String toString() =>
+      'OAuthException: $error${description == null ? '' : ' ($description)'}';
 }
 
 class OAuthService {
@@ -81,11 +105,7 @@ class OAuthService {
       callbackUrlScheme: scheme,
     );
 
-    final uri = Uri.parse(callbackUrl);
-    final code = uri.queryParameters['code'];
-    if (code == null || code.isEmpty) {
-      throw StateError('No authorization code in callback: $callbackUrl');
-    }
+    final code = extractAuthorizationCode(callbackUrl);
 
     final token = await _exchangeCode(
       tokenUrl: tokenUrl,
@@ -98,6 +118,31 @@ class OAuthService {
 
     await _storage.save(token);
     return token;
+  }
+
+  /// Extracts the authorization code from an OAuth redirect [callbackUrl].
+  ///
+  /// Throws an [OAuthException] (a catchable [Exception]) when the provider
+  /// redirects back with an `error` parameter, carrying the provider's
+  /// `error_description` so the UI can show why sign-in failed.
+  static String extractAuthorizationCode(String callbackUrl) {
+    final uri = Uri.parse(callbackUrl);
+    final code = uri.queryParameters['code'];
+    if (code != null && code.isNotEmpty) {
+      return code;
+    }
+
+    final error = uri.queryParameters['error'];
+    if (error != null && error.isNotEmpty) {
+      throw OAuthException(error, uri.queryParameters['error_description']);
+    }
+
+    // No code and no error: a malformed callback. Still surface a catchable
+    // Exception so the UI never fails silently.
+    throw const OAuthException(
+      'invalid_response',
+      'No authorization code in callback.',
+    );
   }
 
   Future<OAuthToken> _exchangeCode({

@@ -44,14 +44,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              SvgPicture.asset(
-                brandTheme.logoAsset,
-                height: 80,
-                colorFilter: ColorFilter.mode(
-                  brandTheme.primary,
-                  BlendMode.srcIn,
-                ),
-              ),
+              SvgPicture.asset(brandTheme.logoAsset, height: 80),
               const SizedBox(height: 24),
               Text(
                 'Sign in to your ${_brandName(session)} account',
@@ -105,12 +98,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     try {
-      await ref.read(oauthServiceProvider).login(
-            brand: session.brand,
-            countryCode: session.countryCode,
-          );
+      await ref
+          .read(oauthServiceProvider)
+          .login(brand: session.brand, countryCode: session.countryCode);
       if (!mounted) return;
       context.go('/otp-setup');
+    } on MissingBrandCredentialsException catch (e) {
+      _log.e('Missing OAuth credentials for ${e.cacheKey}');
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'Sign-in for ${_brandName(session)} (${session.countryCode}) '
+            "isn't configured in this build. The OAuth credentials are "
+            'missing — see tools/extract_secrets.';
+      });
+    } on OAuthException catch (e, st) {
+      _log.e('OAuth provider returned an error: ${e.error}', e, st);
+      if (!mounted) return;
+      setState(() {
+        _error = 'Sign-in failed: ${e.description ?? e.error}';
+      });
     } on PlatformException catch (e) {
       _log.w('OAuth cancelled or failed: ${e.code}');
       if (!mounted) return;
